@@ -136,38 +136,36 @@ class BookingController extends Controller
                     'message' => 'Jadwal bertabrakan dengan booking lain'
                 ], 400);
             }
+
+            $jadwal = Jadwal::where('venue_id', $data['venue_id'])
+                ->where('tanggal', $data['tanggal_booking'])
+                ->where('waktu_mulai', substr($data['waktu_booking'], 0, 5))
+                ->first();
+
+            if (!$jadwal) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Slot jadwal belum dibuat oleh owner'
+                ], 400);
+            }
             
             // Create booking menggunakan model Pemesanan
             $booking = Pemesanan::create([
-                'venue_id' => $data['venue_id'],
-                'user_id' => null, // ⬅️ penanda offline
-                'nama_customer' => $data['nama_customer'],
-                'customer_phone' => $data['customer_phone'],
-                'tanggal_booking' => $data['tanggal_booking'],
-                'waktu_booking' => $data['waktu_booking'],
-                'end_time' => $endTime->format('H:i'),
-                'durasi' => $durasi,
-                'total_biaya' => $data['total_biaya'],
-                'catatan' => $data['catatan'],
-                'status' => 'pending',
-                'booking_code' => $bookingCode,
+                'jadwal_id'        => $jadwal->id,   // ⬅️ KUNCI
+                'venue_id'         => $data['venue_id'],
+                'user_id'          => null,
+                'nama_customer'    => $data['nama_customer'],
+                'customer_phone'   => $data['customer_phone'],
+                'tanggal_booking'  => $data['tanggal_booking'],
+                'waktu_booking'    => $data['waktu_booking'],
+                'end_time'         => $endTime->format('H:i'),
+                'durasi'           => $durasi,
+                'total_biaya'      => $data['total_biaya'],
+                'catatan'          => $data['catatan'],
+                'status'           => 'pending',
+                'booking_code'     => $bookingCode,
             ]);
-
-            // ===============================
-            // BUAT JADWAL
-            // ===============================
-            $jadwal = Jadwal::create([
-                'venue_id'      => $data['venue_id'],
-                'tanggal'       => $data['tanggal_booking'],
-                'waktu_mulai'   => substr($data['waktu_booking'], 0, 5),
-                'waktu_selesai' => $endTime->format('H:i'),
-                'status'        => 'Booked',
-                'catatan'       => 'Booking offline',
-            ]);
-
-            // KAITKAN booking ke jadwal
-            $booking->jadwal_id = $jadwal->id;
-            $booking->save();
+            
 
             return response()->json([
                 'success' => true,

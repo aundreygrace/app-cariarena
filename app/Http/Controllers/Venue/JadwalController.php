@@ -30,65 +30,74 @@ class JadwalController extends Controller
         $bookingsData = [];
     
         foreach ($jadwals as $jadwal) {
-    
-            // WAJIB: formattedDate
+
+            // FORMAT TANGGAL
             $formattedDate = $jadwal->tanggal
                 ? $jadwal->tanggal->format('Y-m-d')
                 : now()->format('Y-m-d');
-    
-            // Format waktu
+        
+            // JAM MULAI SLOT
             $timeStart = $jadwal->waktu_mulai
                 ? date('H:i', strtotime($jadwal->waktu_mulai))
-                : '00:00';
-    
-
+                : '--:--';
+        
+            // ===============================
             // JIKA ADA PEMESANAN
+            // ===============================
             if ($jadwal->pemesanan) {
-    
-                $isUserBooking = (bool) $jadwal->pemesanan->user;
-    
+        
+                $pemesanan = $jadwal->pemesanan;
+        
+                // ⬅️ JAM SELESAI DARI PEMESANAN
+                $timeEnd = $pemesanan->end_time
+                    ? date('H:i', strtotime($pemesanan->end_time))
+                    : '--:--';
+        
+                $isUserBooking = (bool) $pemesanan->user;
+        
                 $bookingsData[$formattedDate][] = [
-                    'time' => $timeRange,
+                    'time' => $timeStart . ' - ' . $timeEnd,
                     'available' => false,
                     'name' => $isUserBooking
-                        ? $jadwal->pemesanan->user->name
-                        : $jadwal->pemesanan->nama_customer,
-    
+                        ? $pemesanan->user->name
+                        : $pemesanan->nama_customer,
+        
                     'price' => 'Rp ' . number_format(
-                        $jadwal->pemesanan->total_biaya ?? 0,
+                        $pemesanan->total_biaya ?? 0,
                         0,
                         ',',
                         '.'
                     ),
-    
+        
                     'detail' => [
                         'nama' => $isUserBooking
-                            ? $jadwal->pemesanan->user->name
-                            : $jadwal->pemesanan->nama_customer,
-    
+                            ? $pemesanan->user->name
+                            : $pemesanan->nama_customer,
                         'sumber' => $isUserBooking ? 'User' : 'Offline',
                         'tempat' => $venue->name,
                         'tanggal' => $jadwal->tanggal
                             ? date('d F Y', strtotime($jadwal->tanggal))
                             : '-',
-                        'durasi' => ($jadwal->pemesanan->durasi ?? 0) . ' jam',
+                        'durasi' => ($pemesanan->durasi ?? 0) . ' jam',
+                        'jam_selesai' => $timeEnd,
                         'biaya' => number_format(
-                            $jadwal->pemesanan->total_biaya ?? 0,
+                            $pemesanan->total_biaya ?? 0,
                             0,
                             ',',
                             '.'
                         ),
-                        'status' => $jadwal->pemesanan->status ?? '-',
+                        'status' => $pemesanan->status ?? '-',
                     ],
                 ];
-    
+        
             }
             // ===============================
-            // JIKA AVAILABLE (BELUM DIBOOK)
+            // SLOT KOSONG (AVAILABLE)
             // ===============================
             else {
+        
                 $bookingsData[$formattedDate][] = [
-                    'time' => $timeRange,
+                    'time' => $timeStart, // ⬅️ HANYA JAM MULAI
                     'available' => true,
                     'name' => '',
                     'price' => 'Rp ' . number_format(
@@ -101,6 +110,7 @@ class JadwalController extends Controller
                 ];
             }
         }
+        
     
         // ===============================
         // STATISTIK
