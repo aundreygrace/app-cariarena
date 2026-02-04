@@ -1,6 +1,6 @@
-@extends('layouts.user')
-@section('title', 'Pesan Venue - ' . ($venue->name ?? 'Venue'))
-@section('content')
+
+<?php $__env->startSection('title', 'Pesan Venue - ' . ($venue->name ?? 'Venue')); ?>
+<?php $__env->startSection('content'); ?>
 
 <style>
 * {
@@ -1442,18 +1442,19 @@ body {
 
 </style>
 
-<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
 
 <div class="desktop-container">
     <div class="venue-info-card mobile-optimized">
         <div class="venue-name">
             <i class="fas fa-map-pin"></i>
-            {{ $venue->name ?? 'Venue Tidak Ditemukan' }}
+            <?php echo e($venue->name ?? 'Venue Tidak Ditemukan'); ?>
+
         </div>
         <div class="venue-details">
             <div class="venue-detail-item">
                 <i class="fas fa-map-marker-alt"></i>
-                <span>{{ $venue->location ?? 'Lokasi tidak tersedia' }}</span>
+                <span><?php echo e($venue->location ?? 'Lokasi tidak tersedia'); ?></span>
             </div>
             <div class="venue-detail-item">
                 <i class="fas fa-clock"></i>
@@ -1461,11 +1462,11 @@ body {
             </div>
             <div class="venue-detail-item">
                 <i class="fas fa-tag"></i>
-                <span>Kategori: {{ $venue->category ?? 'Olahraga' }}</span>
+                <span>Kategori: <?php echo e($venue->category ?? 'Olahraga'); ?></span>
             </div>
             <div class="venue-detail-item">
                 <i class="fas fa-money-bill-wave"></i>
-                <span>Harga: Rp {{ number_format($venue->price_per_hour ?? 0, 0, ',', '.') }}/jam</span>
+                <span>Harga: Rp <?php echo e(number_format($venue->price_per_hour ?? 0, 0, ',', '.')); ?>/jam</span>
             </div>
         </div>
     </div>
@@ -1570,7 +1571,7 @@ body {
                 <div class="summary-label">
                     <i class="fas fa-map-marker-alt"></i> Venue :
                 </div>
-                <div class="summary-value" id="summary-venue">{{ $venue->name ?? 'Venue' }}</div>
+                <div class="summary-value" id="summary-venue"><?php echo e($venue->name ?? 'Venue'); ?></div>
             </div>
             <div class="summary-row">
                 <div class="summary-label">
@@ -1628,9 +1629,9 @@ body {
 </div>
 
 <!-- Form untuk submit booking -->
-<form id="booking-form" method="POST" action="{{ route('pesan.process-booking') }}" style="display: none;">
-    @csrf
-    <input type="hidden" name="venue_id" id="form-venue-id" value="{{ $venue->id ?? '' }}">
+<form id="booking-form" method="POST" action="<?php echo e(route('pesan.process-booking')); ?>" style="display: none;">
+    <?php echo csrf_field(); ?>
+    <input type="hidden" name="venue_id" id="form-venue-id" value="<?php echo e($venue->id ?? ''); ?>">
     <input type="hidden" name="jadwal_id" id="form-jadwal-id">
     <input type="hidden" name="tanggal_booking" id="form-tanggal-booking">
     <input type="hidden" name="waktu_booking" id="form-waktu-booking">
@@ -1638,13 +1639,13 @@ body {
 </form>
 
 <script>
-    const jadwalList = @json($jadwalList ?? []);
+    const jadwalList = <?php echo json_encode($jadwalList ?? [], 15, 512) ?>;
 
     let currentVenue = {
-        id: {{ $venue->id ?? 0 }},
-        price_per_hour: {{ $venue->price_per_hour ?? 0 }},
-        name: "{{ $venue->name ?? 'Venue' }}",
-        address: "{{ $venue->location ?? 'Lokasi tidak tersedia' }}"
+        id: <?php echo e($venue->id ?? 0); ?>,
+        price_per_hour: <?php echo e($venue->price_per_hour ?? 0); ?>,
+        name: "<?php echo e($venue->name ?? 'Venue'); ?>",
+        address: "<?php echo e($venue->location ?? 'Lokasi tidak tersedia'); ?>"
     };
 
     let existingBookings = [];
@@ -2051,14 +2052,14 @@ body {
     const tanggal = selectedDate.toISOString().split('T')[0];
     
     // Validasi dengan API sebelum submit
-    fetch('{{ route("pesan.available-slots") }}', {
+    fetch('<?php echo e(route("pesan.available-slots")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         },
         body: JSON.stringify({
-            venue_id: {{ $venue->id }},
+            venue_id: <?php echo e($venue->id); ?>,
             jadwal_id: jadwalId,
             tanggal: tanggal,
             waktu_mulai: waktu,
@@ -2069,7 +2070,7 @@ body {
     .then(data => {
         if (data.available) {
             // Isi form dan submit
-            document.getElementById('form-venue-id').value = {{ $venue->id }};
+            document.getElementById('form-venue-id').value = <?php echo e($venue->id); ?>;
             document.getElementById('form-jadwal-id').value = jadwalId;
             document.getElementById('form-tanggal-booking').value = tanggal;
             document.getElementById('form-waktu-booking').value = waktu;
@@ -2186,4 +2187,5 @@ body {
     });
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.user', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\CariArena\resources\views/user/pesan/pembayaran.blade.php ENDPATH**/ ?>

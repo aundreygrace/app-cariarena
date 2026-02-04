@@ -17,7 +17,7 @@ class PaymentController extends Controller
         // Validasi data
         $request->validate([
             'venue_id' => 'required|exists:venues,id',
-            'booking_id' => 'nullable|exists:booking,id',
+            'booking_id' => 'required|exists:booking,id',
             'total_biaya' => 'required|numeric',
             'durasi' => 'required|integer',
             'tanggal_booking' => 'required|date',
@@ -47,15 +47,13 @@ class PaymentController extends Controller
             ]);
 
             // Update status booking jika ada booking_id
-            if ($request->booking_id) {
-                $booking = Booking::find($request->booking_id);
-                if ($booking) {
-                    $booking->update([
-                        'status' => 'Terkonfirmasi',
-                        'updated_at' => now(),
-                    ]);
-                }
-            }
+            $booking = Pemesanan::findOrFail($request->booking_id);
+
+            $booking->markAsPaid(
+                $request->payment_method,
+                $request->total_biaya
+            );
+            
 
             // Redirect ke halaman riwayat booking dengan data transaksi
             return redirect()->route('pesan.riwayat-booking')->with([

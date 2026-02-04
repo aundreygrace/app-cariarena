@@ -151,9 +151,8 @@ class JadwalController extends Controller
             'todayRevenue',
             'totalRevenue'
         ));
-    }    
-       
-
+    } 
+    
     public function aturJadwal()
     {
         $user = Auth::user();
@@ -360,4 +359,19 @@ class JadwalController extends Controller
             return response()->json(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
     }
+
+        public function getBookedSlots($venueId, $date)
+    {
+        return \DB::table('booking')
+            ->where('venue_id', $venueId)
+            ->where('tanggal_booking', $date)
+            ->whereIn('status', ['pending', 'confirmed', 'draft'])
+            ->where(function ($q) {
+                $q->whereNull('payment_expired_at')
+                ->orWhere('payment_expired_at', '>', now());
+            })
+            ->select('waktu_booking', 'end_time')
+            ->get();
+    }
+
 }

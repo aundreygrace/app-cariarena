@@ -108,4 +108,29 @@ class Kernel extends HttpKernel
         \Illuminate\Routing\Middleware\SubstituteBindings::class,
         \Illuminate\Auth\Middleware\Authorize::class,
     ];
+
+    // Di app/Console/Kernel.php
+    protected function schedule(Schedule $schedule)
+    {
+        // Cleanup expired bookings every minute
+        $schedule->call(function () {
+            $count = \App\Models\Booking::cleanupExpiredBookings();
+            if ($count > 0) {
+                \Log::info("Cleaned up {$count} expired bookings at " . now());
+            }
+        })->everyMinute();
+        
+        // Cleanup expired jadwal locks every minute
+        $schedule->call(function () {
+            $count = \App\Models\Jadwal::releaseExpiredLocks();
+            if ($count > 0) {
+                \Log::info("Released {$count} expired jadwal locks at " . now());
+            }
+        })->everyMinute();
+        
+        $schedule->call(function () {
+            \App\Models\Pemesanan::cleanupExpiredBookings();
+        })->everyMinute();
+        
+    }
 }
