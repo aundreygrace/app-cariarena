@@ -33,9 +33,10 @@
     <!-- Horizontal Navigation -->
     <div class="horizontal-nav">
         <a href="#" class="<?php echo e(session('activeSection', 'profil-akun') == 'profil-akun' ? 'active' : ''); ?>" data-target="profil-akun">Profil Akun</a>
-        <a href="#" class="<?php echo e(session('activeSection') == 'jadwal-slot' ? 'active' : ''); ?>" data-target="jadwal-slot">Jadwal & Slot Waktu</a>
-        <a href="#" class="<?php echo e(session('activeSection') == 'notifikasi' ? 'active' : ''); ?>" data-target="notifikasi">Notifikasi</a>
-        <a href="#" class="<?php echo e(session('activeSection') == 'keamanan' ? 'active' : ''); ?>" data-target="keamanan">Keamanan</a>
+        <a href="#" class="<?php echo e(session('activeSection') == 'pengaturan-sistem' ? 'active' : ''); ?>" data-target="pengaturan-sistem">Pengaturan Sistem</a>
+        <a href="#" class="<?php echo e(session('activeSection') == 'manajemen-admin' ? 'active' : ''); ?>" data-target="manajemen-admin">Manajemen Admin</a>
+        <a href="#" class="<?php echo e(session('activeSection') == 'pengaturan-notifikasi' ? 'active' : ''); ?>" data-target="pengaturan-notifikasi">Notifikasi</a>
+        <a href="#" class="<?php echo e(session('activeSection') == 'keamanan-backup' ? 'active' : ''); ?>" data-target="keamanan-backup">Keamanan & Backup</a>
         <a href="#" class="<?php echo e(session('activeSection') == 'pusat-bantuan' ? 'active' : ''); ?>" data-target="pusat-bantuan">Pusat Bantuan</a>
     </div>
 
@@ -45,25 +46,34 @@
         <section id="profil-akun" class="settings-section <?php echo e(session('activeSection', 'profil-akun') == 'profil-akun' ? 'active' : ''); ?>">
             <h2>👤 Profil Akun</h2>
             
-            <form method="POST" action="<?php echo e(route('venue.pengaturan.profile.update')); ?>" enctype="multipart/form-data" id="profileForm">
+            <form method="POST" action="<?php echo e(route('admin.pengaturan.profile.update')); ?>" enctype="multipart/form-data" id="profileForm">
                 <?php echo csrf_field(); ?>
                 
                 <div class="form-group">
                     <label>Foto Profil</label>
                     <div class="photo-upload">
                         <div class="photo-preview" id="photoPreview">
-                        <?php
-                            $user = auth()->user();
-                            // ✅ Using Model Accessor - Auto detect role!
-                            $photoUrl = $user->profile_photo_url;
-                            $hasPhoto = !is_null($photoUrl);
-                            
-                            // Add timestamp for cache busting
-                            if(session('profile_photo_updated') && $hasPhoto) {
-                                $photoUrl .= '?t=' . time();
-                                session()->forget('profile_photo_updated');
-                            }
-                        ?>
+                            <?php
+                                $user = auth()->user();
+                                $photoUrl = null;
+                                $hasPhoto = false;
+                                
+                                if ($user->profile_photo) {
+                                    // Cek file di storage
+                                    $storagePath = storage_path('app/public/profile-photos/' . $user->profile_photo);
+                                    
+                                    if (file_exists($storagePath)) {
+                                        $photoUrl = route('admin.pengaturan.profile.photo', ['filename' => $user->profile_photo]);
+                                        $hasPhoto = true;
+                                        
+                                        // Tambahkan timestamp cache buster jika baru diupdate
+                                        if(session('profile_photo_updated')) {
+                                            $photoUrl .= '?t=' . time();
+                                            session()->forget('profile_photo_updated');
+                                        }
+                                    }
+                                }
+                            ?>
                             
                             <?php if($hasPhoto && $photoUrl): ?>
                                 <img src="<?php echo e($photoUrl); ?>" 
@@ -71,7 +81,8 @@
                                      id="currentProfilePhoto"
                                      class="profile-image"
                                      data-filename="<?php echo e($user->profile_photo); ?>"
-                                     onerror="this.onerror=null; this.src='<?php echo e(asset('images/default-avatar.png')); ?>'; this.classList.add('default-avatar-img');">
+                                     onerror="this.onerror=null; this.src='<?php echo e(asset('images/default-avatar.png')); ?>'; this.classList.add('default-avatar-img');"
+                                     style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                             <?php else: ?>
                                 <div class="default-avatar">
                                     <i class="fas fa-user"></i>
@@ -182,122 +193,25 @@ unset($__errorArgs, $__bag); ?>
                 </div>
                 
                 <div class="form-group">
-                    <label for="nama-venue">Nama Venue</label>
-                    <input type="text" id="nama-venue" name="venue_name" placeholder="Masukkan nama venue" 
-                           value="<?php echo e(old('venue_name', auth()->user()->venue_name)); ?>"
-                           class="<?php $__errorArgs = ['venue_name'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>">
-                    <?php $__errorArgs = ['venue_name'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                        <span class="invalid-feedback"><?php echo e($message); ?></span>
-                    <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
+                    <label for="role">Role</label>
+                    <input type="text" id="role" value="<?php echo e(ucfirst(auth()->user()->roles->first()->name ?? 'Admin')); ?>" readonly disabled>
+                    <small class="text-muted">Role tidak dapat diubah</small>
                 </div>
                 
-                <div class="form-group">
-                    <label for="deskripsi">Deskripsi Singkat</label>
-                    <textarea id="deskripsi" name="description" placeholder="Masukkan deskripsi singkat"
-                              class="<?php $__errorArgs = ['description'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>"><?php echo e(old('description', auth()->user()->description)); ?></textarea>
-                    <div class="char-count">
-                        <span id="charCount">0</span>/500 karakter
-                    </div>
-                    <?php $__errorArgs = ['description'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                        <span class="invalid-feedback"><?php echo e($message); ?></span>
-                    <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                </div>
-                
-                <div class="action-buttons">
-                    <button type="button" class="btn btn-outline" onclick="resetProfilForm()">Reset</button>
-                    <button type="submit" class="btn btn-primary" id="simpanProfil">
-                        <i class="fas fa-save me-2"></i>Simpan Perubahan
-                    </button>
-                </div>
-            </form>
-        </section>
-
-        <!-- Jadwal & Slot Waktu Section -->
-        <section id="jadwal-slot" class="settings-section <?php echo e(session('activeSection') == 'jadwal-slot' ? 'active' : ''); ?>">
-            <h2>📅 Jadwal & Slot Waktu</h2>
-            
-            <div class="info-box">
-                <i class="fas fa-info-circle"></i>
-                <p>Atur jadwal operasional venue Anda. Jadwal ini akan ditampilkan kepada pengguna yang ingin booking.</p>
-            </div>
-            
-            <form method="POST" action="<?php echo e(route('venue.pengaturan.schedule.update')); ?>" id="scheduleForm">
-                <?php echo csrf_field(); ?>
-                
-                <div class="form-group">
-                    <label for="hari">Hari Operasional *</label>
-                    <select id="hari" name="day" class="<?php $__errorArgs = ['day'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>">
-                        <option value="">Pilih hari...</option>
-                        <option value="setiap hari" <?php echo e(old('day', isset($schedule->day) && $schedule->day == 'setiap hari' ? 'selected' : '')); ?>>Setiap Hari</option>
-                        <option value="senin" <?php echo e(old('day', isset($schedule->day) && $schedule->day == 'senin' ? 'selected' : '')); ?>>Senin</option>
-                        <option value="selasa" <?php echo e(old('day', isset($schedule->day) && $schedule->day == 'selasa' ? 'selected' : '')); ?>>Selasa</option>
-                        <option value="rabu" <?php echo e(old('day', isset($schedule->day) && $schedule->day == 'rabu' ? 'selected' : '')); ?>>Rabu</option>
-                        <option value="kamis" <?php echo e(old('day', isset($schedule->day) && $schedule->day == 'kamis' ? 'selected' : '')); ?>>Kamis</option>
-                        <option value="jumat" <?php echo e(old('day', isset($schedule->day) && $schedule->day == 'jumat' ? 'selected' : '')); ?>>Jumat</option>
-                        <option value="sabtu" <?php echo e(old('day', isset($schedule->day) && $schedule->day == 'sabtu' ? 'selected' : '')); ?>>Sabtu</option>
-                        <option value="minggu" <?php echo e(old('day', isset($schedule->day) && $schedule->day == 'minggu' ? 'selected' : '')); ?>>Minggu</option>
-                    </select>
-                    <?php $__errorArgs = ['day'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                        <span class="invalid-feedback"><?php echo e($message); ?></span>
-                    <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                </div>
-                
-                <div class="time-group">
+                <div class="password-section">
+                    <h3><i class="fas fa-key me-2"></i>Ganti Password</h3>
+                    <p class="section-info">Kosongkan jika tidak ingin mengganti password</p>
+                    
                     <div class="form-group">
-                        <label for="jam-buka">Jam Buka *</label>
-                        <input type="time" id="jam-buka" name="open_time" 
-                               value="<?php echo e(old('open_time', isset($schedule->waktu_mulai) && !empty($schedule->waktu_mulai) ? substr($schedule->waktu_mulai, 0, 5) : '08:00')); ?>"
-                               class="<?php $__errorArgs = ['open_time'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>">
-                        <?php $__errorArgs = ['open_time'];
+                        <label for="current_password">Password Saat Ini</label>
+                        <div class="password-input">
+                            <input type="password" id="current_password" name="current_password" 
+                                   placeholder="Masukkan password saat ini">
+                            <button type="button" class="toggle-password" onclick="togglePassword('current_password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <?php $__errorArgs = ['current_password'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -310,18 +224,39 @@ unset($__errorArgs, $__bag); ?>
                     </div>
                     
                     <div class="form-group">
-                        <label for="jam-tutup">Jam Tutup *</label>
-                        <input type="time" id="jam-tutup" name="close_time" 
-                               value="<?php echo e(old('close_time', isset($schedule->waktu_selesai) && !empty($schedule->waktu_selesai) ? substr($schedule->waktu_selesai, 0, 5) : '22:00')); ?>"
-                               class="<?php $__errorArgs = ['close_time'];
+                        <label for="new_password">Password Baru</label>
+                        <div class="password-input">
+                            <input type="password" id="new_password" name="new_password" 
+                                   placeholder="Masukkan password baru">
+                            <button type="button" class="toggle-password" onclick="togglePassword('new_password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="password-strength" id="passwordStrength">
+                            <span class="strength-text">Kekuatan password</span>
+                        </div>
+                        <?php $__errorArgs = ['new_password'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <span class="invalid-feedback"><?php echo e($message); ?></span>
+                        <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>">
-                        <?php $__errorArgs = ['close_time'];
+unset($__errorArgs, $__bag); ?>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="new_password_confirmation">Konfirmasi Password Baru</label>
+                        <div class="password-input">
+                            <input type="password" id="new_password_confirmation" name="new_password_confirmation" 
+                                   placeholder="Konfirmasi password baru">
+                            <button type="button" class="toggle-password" onclick="togglePassword('new_password_confirmation')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <?php $__errorArgs = ['new_password_confirmation'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -334,9 +269,83 @@ unset($__errorArgs, $__bag); ?>
                     </div>
                 </div>
                 
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-outline" onclick="resetProfilForm()">Reset</button>
+                    <button type="submit" class="btn btn-primary" id="simpanProfil">
+                        <i class="fas fa-save me-2"></i>Simpan Perubahan
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Pengaturan Sistem Section -->
+        <section id="pengaturan-sistem" class="settings-section <?php echo e(session('activeSection') == 'pengaturan-sistem' ? 'active' : ''); ?>">
+            <h2>⚙️ Pengaturan Sistem</h2>
+            
+            <div class="info-box">
+                <i class="fas fa-info-circle"></i>
+                <p>Atur pengaturan sistem aplikasi CariArena.</p>
+            </div>
+            
+            <form method="POST" action="<?php echo e(route('admin.pengaturan.system.update')); ?>" id="systemForm">
+                <?php echo csrf_field(); ?>
+                
                 <div class="form-group">
-                    <label for="status">Status</label>
-                    <select id="status" name="status" class="<?php $__errorArgs = ['status'];
+                    <label>Logo Aplikasi</label>
+                    <div class="photo-upload">
+                        <div class="photo-preview" id="logoPreview">
+                            <?php
+                                // Simulasi logo
+                                $logoUrl = asset('images/logo.png');
+                                $hasLogo = file_exists(public_path('images/logo.png'));
+                            ?>
+                            
+                            <?php if($hasLogo): ?>
+                                <img src="<?php echo e($logoUrl); ?>" 
+                                     alt="Logo Aplikasi" 
+                                     id="currentLogo"
+                                     class="profile-image"
+                                     onerror="this.onerror=null; this.src='<?php echo e(asset('images/default-logo.png')); ?>';"
+                                     style="width: 100%; height: 100%; object-fit: contain;">
+                            <?php else: ?>
+                                <div class="default-avatar">
+                                    <i class="fas fa-flag"></i>
+                                    <span>Logo App</span>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="upload-controls">
+                            <input type="file" id="logo" name="logo" style="display: none;" 
+                                   accept="image/*" onchange="handleLogoUpload(this)">
+                            <div class="upload-btn" onclick="document.getElementById('logo').click()">
+                                <i class="fas fa-upload"></i> Upload Logo Baru
+                            </div>
+                            <?php if($hasLogo): ?>
+                            <div class="remove-btn" onclick="removeLogo()">
+                                <i class="fas fa-trash"></i> Hapus Logo
+                            </div>
+                            <?php endif; ?>
+                            <p class="upload-info">Format: JPG, PNG, SVG (Maks. 2MB)</p>
+                            <input type="hidden" name="remove_logo" id="removeLogoInput" value="0">
+                        </div>
+                    </div>
+                    <?php $__errorArgs = ['logo'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <span class="invalid-feedback"><?php echo e($message); ?></span>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                </div>
+                
+                <div class="form-group">
+                    <label for="nama-aplikasi">Nama Aplikasi *</label>
+                    <input type="text" id="nama-aplikasi" name="app_name" placeholder="Masukkan nama aplikasi" 
+                           value="<?php echo e(old('app_name', config('app.name', 'CariArena'))); ?>" required
+                           class="<?php $__errorArgs = ['app_name'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -344,11 +353,7 @@ $message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
-                        <option value="available" <?php echo e(old('status', isset($schedule->status) && $schedule->status == 'available' ? 'selected' : '')); ?>>Tersedia</option>
-                        <option value="busy" <?php echo e(old('status', isset($schedule->status) && $schedule->status == 'busy' ? 'selected' : '')); ?>>Sibuk</option>
-                        <option value="closed" <?php echo e(old('status', isset($schedule->status) && $schedule->status == 'closed' ? 'selected' : '')); ?>>Tutup</option>
-                    </select>
-                    <?php $__errorArgs = ['status'];
+                    <?php $__errorArgs = ['app_name'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -361,17 +366,18 @@ unset($__errorArgs, $__bag); ?>
                 </div>
                 
                 <div class="form-group">
-                    <label for="catatan">Catatan (Opsional)</label>
-                    <textarea id="catatan" name="catatan" placeholder="Contoh: Libur nasional, event khusus, dll."
-                              class="<?php $__errorArgs = ['catatan'];
+                    <label for="email-aplikasi">Email Aplikasi *</label>
+                    <input type="email" id="email-aplikasi" name="app_email" placeholder="Masukkan email aplikasi" 
+                           value="<?php echo e(old('app_email', config('mail.from.address', 'noreply@cariarena.com'))); ?>" required
+                           class="<?php $__errorArgs = ['app_email'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>"><?php echo e(old('catatan', isset($schedule->catatan) ? $schedule->catatan : '')); ?></textarea>
-                    <?php $__errorArgs = ['catatan'];
+unset($__errorArgs, $__bag); ?>">
+                    <?php $__errorArgs = ['app_email'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -383,36 +389,362 @@ endif;
 unset($__errorArgs, $__bag); ?>
                 </div>
                 
-                <div class="current-schedule" style="display: <?php echo e(isset($schedule->waktu_mulai) ? 'block' : 'none'); ?>;">
-                    <h4>Jadwal Saat Ini:</h4>
-                    <p>
-                        <i class="fas fa-calendar me-2"></i>
-                        <?php echo e(isset($schedule->day) ? ucfirst($schedule->day) : 'Setiap Hari'); ?>: 
-                        <?php echo e(isset($schedule->waktu_mulai) ? substr($schedule->waktu_mulai, 0, 5) : '08:00'); ?> - 
-                        <?php echo e(isset($schedule->waktu_selesai) ? substr($schedule->waktu_selesai, 0, 5) : '22:00'); ?>
-
-                    </p>
+                <div class="form-group">
+                    <label for="bahasa">Bahasa Default</label>
+                    <select id="bahasa" name="language" class="<?php $__errorArgs = ['language'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                        <option value="id" <?php echo e(old('language', config('app.locale', 'id')) == 'id' ? 'selected' : ''); ?>>Bahasa Indonesia</option>
+                        <option value="en" <?php echo e(old('language', config('app.locale', 'id')) == 'en' ? 'selected' : ''); ?>>English</option>
+                    </select>
+                    <?php $__errorArgs = ['language'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <span class="invalid-feedback"><?php echo e($message); ?></span>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                </div>
+                
+                <div class="form-group">
+                    <label for="zona-waktu">Zona Waktu</label>
+                    <select id="zona-waktu" name="timezone" class="<?php $__errorArgs = ['timezone'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                        <option value="Asia/Jakarta" <?php echo e(old('timezone', config('app.timezone', 'Asia/Jakarta')) == 'Asia/Jakarta' ? 'selected' : ''); ?>>WIB (UTC+7)</option>
+                        <option value="Asia/Makassar" <?php echo e(old('timezone', config('app.timezone')) == 'Asia/Makassar' ? 'selected' : ''); ?>>WITA (UTC+8)</option>
+                        <option value="Asia/Jayapura" <?php echo e(old('timezone', config('app.timezone')) == 'Asia/Jayapura' ? 'selected' : ''); ?>>WIT (UTC+9)</option>
+                    </select>
+                    <?php $__errorArgs = ['timezone'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <span class="invalid-feedback"><?php echo e($message); ?></span>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                </div>
+                
+                <div class="form-group">
+                    <label for="format-tanggal">Format Tanggal</label>
+                    <select id="format-tanggal" name="date_format" class="<?php $__errorArgs = ['date_format'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                        <option value="d/m/Y" <?php echo e(old('date_format', 'd/m/Y') == 'd/m/Y' ? 'selected' : ''); ?>>DD/MM/YYYY</option>
+                        <option value="m/d/Y" <?php echo e(old('date_format', 'd/m/Y') == 'm/d/Y' ? 'selected' : ''); ?>>MM/DD/YYYY</option>
+                        <option value="Y-m-d" <?php echo e(old('date_format', 'd/m/Y') == 'Y-m-d' ? 'selected' : ''); ?>>YYYY-MM-DD</option>
+                    </select>
+                    <?php $__errorArgs = ['date_format'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <span class="invalid-feedback"><?php echo e($message); ?></span>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
                 
                 <div class="action-buttons">
-                    <button type="button" class="btn btn-outline" onclick="resetScheduleForm()">Reset</button>
-                    <button type="submit" class="btn btn-primary" id="simpanJadwal">
-                        <i class="fas fa-save me-2"></i>Simpan Jadwal
+                    <button type="button" class="btn btn-outline" onclick="resetSystemForm()">Reset</button>
+                    <button type="submit" class="btn btn-primary" id="simpanSistem">
+                        <i class="fas fa-save me-2"></i>Simpan Pengaturan
                     </button>
                 </div>
             </form>
         </section>
 
-        <!-- Notifikasi Section -->
-        <section id="notifikasi" class="settings-section <?php echo e(session('activeSection') == 'notifikasi' ? 'active' : ''); ?>">
+        <!-- Manajemen Admin Section -->
+        <section id="manajemen-admin" class="settings-section <?php echo e(session('activeSection') == 'manajemen-admin' ? 'active' : ''); ?>">
+            <h2>👥 Manajemen Admin</h2>
+            
+            <div class="info-box">
+                <i class="fas fa-info-circle"></i>
+                <p>Kelola admin yang dapat mengakses dashboard admin.</p>
+            </div>
+            
+            <!-- Form Tambah Admin -->
+            <form method="POST" action="<?php echo e(route('admin.pengaturan.admin.add')); ?>" id="formTambahAdmin">
+                <?php echo csrf_field(); ?>
+                
+                <div class="form-group">
+                    <label for="nama-admin">Nama Lengkap *</label>
+                    <input type="text" id="nama-admin" name="name" placeholder="Masukkan nama admin" 
+                           value="<?php echo e(old('name')); ?>" required
+                           class="<?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                    <?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <span class="invalid-feedback"><?php echo e($message); ?></span>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email-admin">Email *</label>
+                    <input type="email" id="email-admin" name="email" placeholder="Masukkan email admin" 
+                           value="<?php echo e(old('email')); ?>" required
+                           class="<?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                    <?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <span class="invalid-feedback"><?php echo e($message); ?></span>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                </div>
+                
+                <div class="form-group">
+                    <label for="telepon-admin">Nomor Telepon</label>
+                    <input type="tel" id="telepon-admin" name="phone" placeholder="Masukkan nomor telepon" 
+                           value="<?php echo e(old('phone')); ?>"
+                           class="<?php $__errorArgs = ['phone'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                    <?php $__errorArgs = ['phone'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <span class="invalid-feedback"><?php echo e($message); ?></span>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                </div>
+                
+                <div class="form-group">
+                    <label for="role-admin">Role *</label>
+                    <select id="role-admin" name="role" class="<?php $__errorArgs = ['role'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                        <option value="">-- Pilih Role --</option>
+                        <option value="admin" <?php echo e(old('role') == 'admin' ? 'selected' : ''); ?>>Admin</option>
+                        <option value="superadmin" <?php echo e(old('role') == 'superadmin' ? 'selected' : ''); ?>>Super Admin</option>
+                    </select>
+                    <?php $__errorArgs = ['role'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <span class="invalid-feedback"><?php echo e($message); ?></span>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password-admin">Password *</label>
+                    <div class="password-input">
+                        <input type="password" id="password-admin" name="password" placeholder="Masukkan password" required
+                               class="<?php $__errorArgs = ['password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                        <button type="button" class="toggle-password" onclick="togglePassword('password-admin')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <?php $__errorArgs = ['password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <span class="invalid-feedback"><?php echo e($message); ?></span>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password_confirmation">Konfirmasi Password *</label>
+                    <div class="password-input">
+                        <input type="password" id="password_confirmation" name="password_confirmation" 
+                               placeholder="Konfirmasi password" required
+                               class="<?php $__errorArgs = ['password_confirmation'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                        <button type="button" class="toggle-password" onclick="togglePassword('password_confirmation')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <?php $__errorArgs = ['password_confirmation'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <span class="invalid-feedback"><?php echo e($message); ?></span>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                </div>
+                
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-primary" id="tambahAdmin">
+                        <i class="fas fa-plus me-2"></i>Tambah Admin
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Tabel Admin -->
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama</th>
+                                <th>Email</th>
+                                <th>Telepon</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Bergabung</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php $__empty_1 = true; $__currentLoopData = $admins; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $admin): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                            <tr>
+                                <td><?php echo e($index + 1); ?></td>
+                                <td class="fw-bold"><?php echo e($admin->name); ?></td>
+                                <td><?php echo e($admin->email); ?></td>
+                                <td><?php echo e($admin->phone ?: '-'); ?></td>
+                                <td>
+                                    <?php
+                                        $role = $admin->roles->first();
+                                        $roleName = $role ? $role->name : 'admin';
+                                        $roleClass = $roleName == 'superadmin' ? 'badge-success' : 'badge-info';
+                                    ?>
+                                    <span class="badge <?php echo e($roleClass); ?>">
+                                        <?php echo e(ucfirst($roleName)); ?>
+
+                                    </span>
+                                </td>
+                                <td>
+                                    <span id="admin-status-<?php echo e($admin->id); ?>" class="badge <?php echo e($admin->email_verified_at ? 'badge-success' : 'badge-danger'); ?>">
+                                        <?php echo e($admin->email_verified_at ? 'Aktif' : 'Nonaktif'); ?>
+
+                                    </span>
+                                </td>
+                                <td><?php echo e($admin->created_at->format('d/m/Y')); ?></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-info edit-admin" 
+                                                title="Edit" 
+                                                data-id="<?php echo e($admin->id); ?>"
+                                                data-name="<?php echo e($admin->name); ?>"
+                                                data-email="<?php echo e($admin->email); ?>"
+                                                data-phone="<?php echo e($admin->phone); ?>"
+                                                data-role="<?php echo e($roleName); ?>"
+                                                data-status="<?php echo e($admin->email_verified_at ? 'aktif' : 'nonaktif'); ?>">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <?php if($admin->id != auth()->id()): ?>
+                                        <button class="btn btn-danger delete-admin" 
+                                                title="Hapus" 
+                                                data-id="<?php echo e($admin->id); ?>"
+                                                data-name="<?php echo e($admin->name); ?>"
+                                                data-email="<?php echo e($admin->email); ?>">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="fas fa-users text-muted" style="font-size: 2rem;"></i>
+                                    <p class="mt-2">Belum ada data admin</p>
+                                </td>
+                            </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                    
+                    <?php if($admins->count() > 0): ?>
+                    <div class="mt-3 text-muted">
+                        <small>Total Admin: <?php echo e($admins->count()); ?></small>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pengaturan Notifikasi Section -->
+        <section id="pengaturan-notifikasi" class="settings-section <?php echo e(session('activeSection') == 'pengaturan-notifikasi' ? 'active' : ''); ?>">
             <h2>🔔 Pengaturan Notifikasi</h2>
             
             <div class="info-box">
                 <i class="fas fa-info-circle"></i>
-                <p>Atur preferensi notifikasi untuk tetap update dengan aktivitas venue Anda.</p>
+                <p>Atur preferensi notifikasi untuk admin.</p>
             </div>
             
-            <form method="POST" action="<?php echo e(route('venue.pengaturan.notifications.update')); ?>" id="notificationForm">
+            <form method="POST" action="<?php echo e(route('admin.pengaturan.notifications.update')); ?>" id="notificationForm">
                 <?php echo csrf_field(); ?>
                 
                 <div class="notification-category">
@@ -438,58 +770,31 @@ unset($__errorArgs, $__bag); ?>
                         </div>
                         
                         <div class="checkbox-item">
-                            <input type="checkbox" id="email-review" name="email_review" 
-                                   <?php echo e(old('email_review', session('notification_settings.email_review', true)) ? 'checked' : ''); ?>>
-                            <label for="email-review">
-                                <span class="checkbox-label">Review & Rating</span>
-                                <span class="checkbox-desc">Notifikasi saat ada review baru</span>
+                            <input type="checkbox" id="email-report" name="email_report" 
+                                   <?php echo e(old('email_report', session('notification_settings.email_report', true)) ? 'checked' : ''); ?>>
+                            <label for="email-report">
+                                <span class="checkbox-label">Laporan Sistem</span>
+                                <span class="checkbox-desc">Notifikasi laporan mingguan/bulanan</span>
                             </label>
                         </div>
                         
                         <div class="checkbox-item">
-                            <input type="checkbox" id="email-update" name="email_update" 
-                                   <?php echo e(old('email_update', session('notification_settings.email_update', true)) ? 'checked' : ''); ?>>
-                            <label for="email-update">
-                                <span class="checkbox-label">Update Sistem</span>
-                                <span class="checkbox-desc">Informasi update dan maintenance</span>
+                            <input type="checkbox" id="email-venue" name="email_venue" 
+                                   <?php echo e(old('email_venue', session('notification_settings.email_venue', true)) ? 'checked' : ''); ?>>
+                            <label for="email-venue">
+                                <span class="checkbox-label">Venue Baru</span>
+                                <span class="checkbox-desc">Notifikasi saat venue baru bergabung</span>
                             </label>
                         </div>
                         
                         <div class="checkbox-item">
-                            <input type="checkbox" id="email-promo" name="email_promo" 
-                                   <?php echo e(old('email_promo', session('notification_settings.email_promo', false)) ? 'checked' : ''); ?>>
-                            <label for="email-promo">
-                                <span class="checkbox-label">Promo & Penawaran</span>
-                                <span class="checkbox-desc">Informasi promo dan penawaran khusus</span>
+                            <input type="checkbox" id="email-support" name="email_support" 
+                                   <?php echo e(old('email_support', session('notification_settings.email_support', true)) ? 'checked' : ''); ?>>
+                            <label for="email-support">
+                                <span class="checkbox-label">Support Ticket</span>
+                                <span class="checkbox-desc">Notifikasi ticket support baru</span>
                             </label>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="notification-category">
-                    <h3><i class="fas fa-bell me-2"></i>Notifikasi Browser</h3>
-                    
-                    <div class="checkbox-group">
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="browser-notifications" name="browser_notifications" 
-                                   <?php echo e(old('browser_notifications', session('notification_settings.browser_notifications', false)) ? 'checked' : ''); ?>
-
-                                   onchange="toggleBrowserNotifications(this)">
-                            <label for="browser-notifications">
-                                <span class="checkbox-label">Aktifkan Notifikasi Browser</span>
-                                <span class="checkbox-desc">Dapatkan notifikasi real-time di browser</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="browser-permission" id="browserPermission" style="display: none;">
-                        <p class="permission-info">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Anda perlu mengizinkan notifikasi browser untuk fitur ini
-                        </p>
-                        <button type="button" class="btn btn-sm" onclick="requestBrowserPermission()">
-                            <i class="fas fa-check"></i> Izinkan Notifikasi
-                        </button>
                     </div>
                 </div>
                 
@@ -525,20 +830,20 @@ unset($__errorArgs, $__bag); ?>
             </form>
         </section>
 
-        <!-- Keamanan Section -->
-        <section id="keamanan" class="settings-section <?php echo e(session('activeSection') == 'keamanan' ? 'active' : ''); ?>">
-            <h2>🔒 Keamanan Akun</h2>
+        <!-- Keamanan & Backup Section -->
+        <section id="keamanan-backup" class="settings-section <?php echo e(session('activeSection') == 'keamanan-backup' ? 'active' : ''); ?>">
+            <h2>🔒 Keamanan & Backup</h2>
             
             <div class="info-box">
                 <i class="fas fa-shield-alt"></i>
-                <p>Kelola keamanan akun Anda. Pastikan password kuat dan aman.</p>
+                <p>Kelola keamanan sistem dan backup data.</p>
             </div>
             
-            <form method="POST" action="<?php echo e(route('venue.pengaturan.security.update')); ?>" id="securityForm">
+            <form method="POST" action="<?php echo e(route('admin.pengaturan.security.update')); ?>" id="securityForm">
                 <?php echo csrf_field(); ?>
                 
                 <div class="password-change">
-                    <h3><i class="fas fa-key me-2"></i>Ganti Password</h3>
+                    <h3><i class="fas fa-key me-2"></i>Ganti Password Admin</h3>
                     
                     <div class="form-group">
                         <label for="security-current-password">Password Saat Ini *</label>
@@ -648,43 +953,64 @@ unset($__errorArgs, $__bag); ?>
                     </div>
                 </div>
                 
-                <div class="session-management">
-                    <h3><i class="fas fa-laptop me-2"></i>Manajemen Sesi</h3>
-                    <p class="session-info">Anda saat ini login dari perangkat ini.</p>
+                <div class="backup-settings">
+                    <h3><i class="fas fa-database me-2"></i>Pengaturan Backup</h3>
                     
-                    <div class="current-session">
-                        <div class="session-icon">
-                            <i class="fas fa-desktop"></i>
-                        </div>
-                        <div class="session-details">
-                            <h4>Sesi Saat Ini</h4>
-                            <p>
-                                <i class="fas fa-globe"></i> <?php echo e(request()->ip()); ?>
-
-                                <br>
-                                <i class="fas fa-calendar"></i> <?php echo e(now()->format('d M Y H:i')); ?>
-
-                            </p>
-                        </div>
-                        <div class="session-status">
-                            <span class="badge active">Aktif</span>
-                        </div>
+                    <div class="form-group">
+                        <label for="frekuensi-backup">Frekuensi Backup</label>
+                        <select id="frekuensi-backup" name="backup_frequency" class="<?php $__errorArgs = ['backup_frequency'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                            <option value="daily" <?php echo e(old('backup_frequency', 'weekly') == 'daily' ? 'selected' : ''); ?>>Harian</option>
+                            <option value="weekly" <?php echo e(old('backup_frequency', 'weekly') == 'weekly' ? 'selected' : ''); ?> selected>Mingguan</option>
+                            <option value="monthly" <?php echo e(old('backup_frequency', 'weekly') == 'monthly' ? 'selected' : ''); ?>>Bulanan</option>
+                        </select>
+                        <?php $__errorArgs = ['backup_frequency'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <span class="invalid-feedback"><?php echo e($message); ?></span>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="jumlah-backup">Jumlah Backup yang Disimpan</label>
+                        <input type="number" id="jumlah-backup" name="backup_retention" 
+                               value="<?php echo e(old('backup_retention', 30)); ?>" min="1" max="365"
+                               class="<?php $__errorArgs = ['backup_retention'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                        <small class="text-muted">Jumlah backup yang akan disimpan sebelum dihapus otomatis</small>
+                        <?php $__errorArgs = ['backup_retention'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <span class="invalid-feedback"><?php echo e($message); ?></span>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                     
                     <div class="action-buttons">
-                        <button type="button" class="btn btn-outline" onclick="logoutOtherSessions()">
-                            <i class="fas fa-sign-out-alt me-2"></i>Keluar dari Semua Sesi Lain
+                        <button type="button" class="btn btn-outline" onclick="createBackup()">
+                            <i class="fas fa-database me-2"></i>Backup Sekarang
                         </button>
-                        <button type="button" class="btn btn-outline" onclick="showAllSessions()">
-                            <i class="fas fa-list me-2"></i>Lihat Semua Sesi
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="two-factor" style="display: none;">
-                    <h3><i class="fas fa-mobile-alt me-2"></i>Two-Factor Authentication (Coming Soon)</h3>
-                    <div class="coming-soon">
-                        <p>Tingkatkan keamanan dengan verifikasi dua langkah</p>
                     </div>
                 </div>
             </form>
@@ -692,7 +1018,7 @@ unset($__errorArgs, $__bag); ?>
 
         <!-- Pusat Bantuan Section -->
         <section id="pusat-bantuan" class="settings-section <?php echo e(session('activeSection') == 'pusat-bantuan' ? 'active' : ''); ?>">
-            <h2>❓ Pusat Bantuan & FAQ</h2>
+            <h2>❓ Pusat Bantuan Admin</h2>
             
             <div class="help-search">
                 <div class="search-container">
@@ -705,108 +1031,64 @@ unset($__errorArgs, $__bag); ?>
             <div class="faq-categories">
                 <div class="category-tabs">
                     <button class="category-tab active" data-category="all">Semua</button>
+                    <button class="category-tab" data-category="admin">Admin</button>
                     <button class="category-tab" data-category="venue">Venue</button>
-                    <button class="category-tab" data-category="booking">Booking</button>
-                    <button class="category-tab" data-category="payment">Pembayaran</button>
-                    <button class="category-tab" data-category="account">Akun</button>
+                    <button class="category-tab" data-category="user">Pengguna</button>
+                    <button class="category-tab" data-category="system">Sistem</button>
                 </div>
             </div>
             
             <div class="faq-container" id="faqContainer">
-                <div class="faq-category" data-category="venue">
-                    <h3><i class="fas fa-store me-2"></i>Pengaturan Venue</h3>
+                <div class="faq-category" data-category="admin">
+                    <h3><i class="fas fa-user-cog me-2"></i>Manajemen Admin</h3>
                     
                     <div class="faq-list" id="faq-list">
-                        <div class="faq-item" data-category="venue">
+                        <div class="faq-item" data-category="admin">
                             <div class="faq-question" onclick="toggleFAQ(this)">
-                                <span>1. Bagaimana cara mengubah nama venue?</span>
+                                <span>1. Bagaimana cara menambahkan admin baru?</span>
                                 <i class="fas fa-chevron-down"></i>
                             </div>
                             <div class="faq-answer">
-                                <p>Pergi ke menu <strong>Venue Saya</strong>, klik tombol <strong>Edit</strong> pada venue yang ingin diubah, lalu ubah nama sesuai keinginan. Pastikan nama venue mudah dikenali oleh pengguna.</p>
+                                <p>Pergi ke menu <strong>Pengaturan → Manajemen Admin</strong>, isi form tambah admin dengan data lengkap dan password yang aman.</p>
                             </div>
                         </div>
                         
-                        <div class="faq-item" data-category="venue">
+                        <div class="faq-item" data-category="admin">
                             <div class="faq-question" onclick="toggleFAQ(this)">
-                                <span>2. Bagaimana cara menonaktifkan venue?</span>
+                                <span>2. Apa perbedaan role admin dan super admin?</span>
                                 <i class="fas fa-chevron-down"></i>
                             </div>
                             <div class="faq-answer">
-                                <p>Pergi ke menu <strong>Venue Saya</strong>, klik tombol <strong>Status</strong> pada venue yang ingin dinonaktifkan. Status akan otomatis berubah menjadi "Nonaktif". Venue yang nonaktif tidak akan muncul di pencarian pengguna.</p>
-                            </div>
-                        </div>
-                        
-                        <div class="faq-item" data-category="venue">
-                            <div class="faq-question" onclick="toggleFAQ(this)">
-                                <span>3. Bagaimana cara mengatur jam buka/tutup venue?</span>
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                            <div class="faq-answer">
-                                <p>Pergi ke menu <strong>Pengaturan → Jadwal & Slot Waktu</strong>, atur jam buka dan jam tutup sesuai operasional venue Anda. Anda juga bisa mengatur hari operasional.</p>
-                            </div>
-                        </div>
-                        
-                        <div class="faq-item" data-category="venue">
-                            <div class="faq-question" onclick="toggleFAQ(this)">
-                                <span>4. Bagaimana cara menambahkan venue baru?</span>
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                            <div class="faq-answer">
-                                <p>Pergi ke menu <strong>Venue Saya</strong>, klik tombol <strong>Tambah Venue</strong> di pojok kanan atas, atau dari dashboard klik <strong>Aksi Cepat → Tambah Venue</strong>. Isi data venue lengkap untuk pengalaman pengguna yang lebih baik.</p>
+                                <p><strong>Super Admin</strong> memiliki akses penuh termasuk pengaturan sistem dan manajemen admin lainnya. <strong>Admin</strong> memiliki akses terbatas untuk manajemen venue dan pengguna.</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="faq-category" data-category="booking">
-                    <h3><i class="fas fa-calendar-check me-2"></i>Manajemen Booking</h3>
+                <div class="faq-category" data-category="venue">
+                    <h3><i class="fas fa-store me-2"></i>Manajemen Venue</h3>
                     
-                    <div class="faq-item" data-category="booking">
+                    <div class="faq-item" data-category="venue">
                         <div class="faq-question" onclick="toggleFAQ(this)">
-                            <span>5. Bagaimana cara menambahkan booking manual?</span>
+                            <span>3. Bagaimana cara memverifikasi venue?</span>
                                 <i class="fas fa-chevron-down"></i>
                         </div>
                         <div class="faq-answer">
-                            <p>Pergi ke menu <strong>Jadwal</strong>, klik tombol <strong>Tambah Booking</strong> pada jam yang tersedia, atau dari dashboard klik <strong>Aksi Cepat → Atur Jadwal</strong>. Isi data booking lengkap termasuk nama penyewa dan durasi.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="faq-item" data-category="booking">
-                        <div class="faq-question" onclick="toggleFAQ(this)">
-                            <span>6. Bagaimana cara membatalkan booking?</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Pergi ke menu <strong>Jadwal</strong>, cari booking yang ingin dibatalkan, klik tombol <strong>Titik Tiga (⋮)</strong> lalu pilih <strong>Batalkan Booking</strong>. Pastikan untuk menginformasikan kepada penyewa.</p>
+                            <p>Pergi ke menu <strong>Venues → Pending Verification</strong>, klik venue yang ingin diverifikasi, periksa kelengkapan data, lalu klik tombol <strong>Verify</strong>.</p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="faq-category" data-category="payment">
-                    <h3><i class="fas fa-credit-card me-2"></i>Pembayaran & Transaksi</h3>
+                <div class="faq-category" data-category="user">
+                    <h3><i class="fas fa-users me-2"></i>Manajemen Pengguna</h3>
                     
-                    <div class="faq-item" data-category="payment">
+                    <div class="faq-item" data-category="user">
                         <div class="faq-question" onclick="toggleFAQ(this)">
-                            <span>7. Kapan pembayaran booking masuk ke rekening?</span>
+                            <span>4. Bagaimana menonaktifkan akun pengguna?</span>
                             <i class="fas fa-chevron-down"></i>
                         </div>
                         <div class="faq-answer">
-                            <p>Pembayaran akan diproses dalam 1-3 hari kerja setelah booking selesai. Sistem akan otomatis mentransfer ke rekening yang terdaftar di pengaturan pembayaran.</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="faq-category" data-category="account">
-                    <h3><i class="fas fa-user-cog me-2"></i>Pengaturan Akun</h3>
-                    
-                    <div class="faq-item" data-category="account">
-                        <div class="faq-question" onclick="toggleFAQ(this)">
-                            <span>8. Bagaimana cara mengganti foto profil?</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Pergi ke menu <strong>Pengaturan → Profil Akun</strong>, klik area foto profil, pilih foto baru (format JPG/PNG, maksimal 2MB). Klik <strong>Simpan Perubahan</strong> untuk mengupdate.</p>
+                            <p>Pergi ke menu <strong>Users</strong>, cari pengguna yang ingin dinonaktifkan, klik tombol <strong>Action</strong> lalu pilih <strong>Disable Account</strong>.</p>
                         </div>
                     </div>
                 </div>
@@ -818,6 +1100,7 @@ unset($__errorArgs, $__bag); ?>
                 <p>Tidak ada hasil untuk pencarian Anda. Coba kata kunci lain atau hubungi support.</p>
             </div>
             
+            <!-- PERBAIKAN: Bagian Support dengan Email dan WhatsApp saja -->
             <div class="contact-support">
                 <h3><i class="fas fa-headset me-2"></i>Butuh Bantuan Lebih Lanjut?</h3>
                 <div class="support-options">
@@ -825,7 +1108,9 @@ unset($__errorArgs, $__bag); ?>
                     <div class="support-option">
                         <i class="fas fa-envelope"></i>
                         <h4>Email Support</h4>
+                        <!-- PERBAIKAN: Email yang benar -->
                         <p>cariarena.app@gmail.com</p>
+                        <!-- PERBAIKAN: Link email yang benar -->
                         <a href="mailto:cariarena.app@gmail.com" class="btn btn-outline btn-sm">
                             <i class="fas fa-paper-plane me-1"></i>Kirim Email
                         </a>
@@ -835,6 +1120,7 @@ unset($__errorArgs, $__bag); ?>
                         <i class="fab fa-whatsapp"></i>
                         <h4>WhatsApp Support</h4>
                         <p>08:00 - 22:00 WIB</p>
+                        <!-- PERBAIKAN: WhatsApp number yang benar -->
                         <a href="https://wa.me/6285731125834?text=Halo%20Admin%20CariArena,%20saya%20membutuhkan%20bantuan" 
                         target="_blank" class="btn btn-outline btn-sm">
                             <i class="fab fa-whatsapp me-1"></i>Chat WhatsApp
@@ -844,6 +1130,115 @@ unset($__errorArgs, $__bag); ?>
             </div>
         </section>
     </div>
+
+<!-- Modal Edit Admin -->
+<div class="modal fade" id="editAdminModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formEditAdmin" action="<?php echo e(route('admin.pengaturan.admin.update')); ?>" method="POST">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="id" id="edit_admin_id">
+                
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Admin</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_admin_name" class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit_admin_name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_admin_email" class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="edit_admin_email" name="email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_admin_phone" class="form-label">Nomor Telepon</label>
+                        <input type="text" class="form-control" id="edit_admin_phone" name="phone">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_admin_role" class="form-label">Role <span class="text-danger">*</span></label>
+                        <select class="form-control" id="edit_admin_role" name="role" required>
+                            <option value="">-- Pilih Role --</option>
+                            <option value="admin">Admin</option>
+                            <option value="superadmin">Super Admin</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_admin_status" class="form-label">Status <span class="text-danger">*</span></label>
+                        <select class="form-control" id="edit_admin_status" name="status" required>
+                            <option value="">-- Pilih Status --</option>
+                            <option value="aktif">Aktif</option>
+                            <option value="nonaktif">Nonaktif</option>
+                        </select>
+                        <small class="text-muted">Admin aktif dapat login, nonaktif tidak dapat login</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_admin_password" class="form-label">Password Baru (Opsional)</label>
+                        <input type="password" class="form-control" id="edit_admin_password" name="password">
+                        <small class="text-muted">Kosongkan jika tidak ingin mengubah password</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_admin_password_confirmation" class="form-label">Konfirmasi Password Baru</label>
+                        <input type="password" class="form-control" id="edit_admin_password_confirmation" name="password_confirmation">
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="simpanEditAdmin">
+                        <i class="fas fa-save me-2"></i>Simpan Perubahan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Hapus Admin -->
+<div class="modal fade" id="hapusAdminModal" tabindex="-1" aria-labelledby="hapusAdminModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="<?php echo e(route('admin.pengaturan.admin.delete')); ?>" id="formHapusAdmin">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="id" id="hapus_admin_id">
+                
+                <div class="modal-header">
+                    <h5 class="modal-title" id="hapusAdminModalLabel">🗑 Hapus Admin</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="text-center mb-3" id="hapusAdminTitle">Apakah Anda yakin ingin menghapus admin ini?</h5>
+                    <p class="text-center text-muted" id="hapusAdminDetails">
+                        Email: <span id="hapusAdminEmail" class="fw-bold"></span><br>
+                        Status: <span id="hapusAdminStatus" class="fw-bold"></span><br>
+                        Bergabung: <span id="hapusAdminJoined" class="fw-bold"></span>
+                    </p>
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <small>Tindakan ini tidak dapat dibatalkan dan akses admin akan dihapus secara permanen.</small>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger" id="konfirmasiHapusAdmin">
+                        <i class="fas fa-trash me-2"></i>Ya, Hapus Admin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startPush('styles'); ?>
@@ -873,6 +1268,8 @@ unset($__errorArgs, $__bag); ?>
         margin-bottom: 30px;
         gap: 0;
         border-bottom: 2px solid var(--border-color);
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
         scrollbar-width: thin;
     }
 
@@ -1030,13 +1427,6 @@ unset($__errorArgs, $__bag); ?>
         resize: vertical;
         min-height: 100px;
         line-height: 1.5;
-    }
-
-    /* ==== TIME GROUP ==== */
-    .time-group {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
     }
 
     /* ==== PHOTO UPLOAD SECTION ==== */
@@ -1213,33 +1603,6 @@ unset($__errorArgs, $__bag); ?>
         font-style: italic;
     }
 
-    /* ==== PASSWORD STRENGTH ==== */
-    .password-strength {
-        margin-top: 10px;
-    }
-
-    .strength-bar {
-        height: 4px;
-        background: #eee;
-        border-radius: 2px;
-        margin-bottom: 5px;
-        overflow: hidden;
-    }
-
-    .strength-bar::after {
-        content: '';
-        display: block;
-        height: 100%;
-        width: 0%;
-        background: var(--danger-color);
-        transition: width 0.3s, background 0.3s;
-    }
-
-    .strength-text {
-        font-size: 12px;
-        color: var(--text-light);
-    }
-
     /* ==== PASSWORD REQUIREMENTS ==== */
     .password-requirements {
         background: #f8f9fa;
@@ -1296,38 +1659,6 @@ unset($__errorArgs, $__bag); ?>
 
     .password-match.show {
         display: flex;
-    }
-
-    /* ==== CHAR COUNT ==== */
-    .char-count {
-        text-align: right;
-        font-size: 12px;
-        color: var(--text-light);
-        margin-top: 5px;
-    }
-
-    /* ==== CURRENT SCHEDULE ==== */
-    .current-schedule {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        margin: 20px 0;
-        border-left: 4px solid var(--success-color);
-    }
-
-    .current-schedule h4 {
-        margin-top: 0;
-        margin-bottom: 10px;
-        color: var(--text-dark);
-        font-size: 16px;
-    }
-
-    .current-schedule p {
-        margin: 0;
-        color: var(--text-light);
-        display: flex;
-        align-items: center;
-        gap: 8px;
     }
 
     /* ==== CHECKBOX & RADIO GROUPS ==== */
@@ -1393,116 +1724,6 @@ unset($__errorArgs, $__bag); ?>
         border-bottom: none;
     }
 
-    /* ==== BROWSER PERMISSION ==== */
-    .browser-permission {
-        background: #fff8e1;
-        padding: 15px;
-        border-radius: 8px;
-        margin-top: 15px;
-        border-left: 4px solid var(--warning-color);
-    }
-
-    .permission-info {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 10px;
-        color: var(--text-dark);
-        font-size: 14px;
-    }
-
-    .permission-info i {
-        color: var(--warning-color);
-    }
-
-    /* ==== COMING SOON ==== */
-    .coming-soon {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        border-radius: 8px;
-        text-align: center;
-        margin: 15px 0;
-    }
-
-    .coming-soon p {
-        margin: 0;
-        font-size: 14px;
-    }
-
-    /* ==== SESSION MANAGEMENT ==== */
-    .session-management {
-        margin-top: 30px;
-        padding-top: 30px;
-        border-top: 1px solid var(--border-color);
-    }
-
-    .session-info {
-        color: var(--text-light);
-        margin-bottom: 20px;
-        font-size: 14px;
-    }
-
-    .current-session {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        border: 1px solid var(--border-color);
-    }
-
-    .session-icon {
-        width: 50px;
-        height: 50px;
-        background: var(--primary-color);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 20px;
-    }
-
-    .session-details {
-        flex: 1;
-    }
-
-    .session-details h4 {
-        margin: 0 0 5px 0;
-        color: var(--text-dark);
-        font-size: 16px;
-    }
-
-    .session-details p {
-        margin: 0;
-        color: var(--text-light);
-        font-size: 13px;
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-    }
-
-    .session-details i {
-        margin-right: 5px;
-        width: 15px;
-        text-align: center;
-    }
-
-    .session-status .badge {
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 500;
-    }
-
-    .session-status .badge.active {
-        background: #d4edda;
-        color: #155724;
-    }
-
     /* ==== FAQ STYLES ==== */
     .help-search {
         margin-bottom: 30px;
@@ -1529,20 +1750,6 @@ unset($__errorArgs, $__bag); ?>
         border: 2px solid var(--border-color);
         border-radius: 8px;
         font-size: 15px;
-    }
-
-    .search-btn {
-        padding: 12px 25px;
-        background: var(--primary-color);
-        color: white;
-        border: none;
-        border-radius: 0 8px 8px 0;
-        cursor: pointer;
-        transition: background 0.3s;
-    }
-
-    .search-btn:hover {
-        background: var(--primary-hover);
     }
 
     .search-info {
@@ -1676,7 +1883,7 @@ unset($__errorArgs, $__bag); ?>
     }
 
     /* ==== CONTACT SUPPORT ==== */
-    /* UKURAN DIPERKECIL DAN HANYA 2 KOLOM */
+    /* PERBAIKAN: UKURAN DIPERKECIL DAN HANYA 2 KOLOM */
     .contact-support {
         margin-top: 30px;
         padding-top: 25px;
@@ -1688,7 +1895,7 @@ unset($__errorArgs, $__bag); ?>
         grid-template-columns: repeat(2, 1fr); /* Hanya 2 kolom */
         gap: 15px; /* Gap diperkecil */
         margin-top: 15px;
-        max-width: 1200; /* Lebar maksimum dibatasi */
+        max-width: 600px; /* Lebar maksimum dibatasi */
         margin-left: auto;
         margin-right: auto;
     }
@@ -1830,6 +2037,65 @@ unset($__errorArgs, $__bag); ?>
         font-size: 18px;
     }
 
+    /* ==== TABLE STYLES ==== */
+    .table-container {
+        background: var(--card-bg);
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        margin-top: 20px;
+    }
+
+    .table {
+        margin-bottom: 0;
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table th {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 15px;
+        font-weight: 600;
+        text-align: left;
+    }
+
+    .table td {
+        padding: 12px 15px;
+        vertical-align: middle;
+        border-color: #f1f5f9;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+        font-weight: 500;
+        border-radius: 6px;
+    }
+
+    .badge-success {
+        background-color: #E8F5E8;
+        color: #2E7D32;
+        border: 1px solid #C8E6C9;
+    }
+
+    .badge-danger {
+        background-color: #FFEBEE;
+        color: #D32F2F;
+        border: 1px solid #FFCDD2;
+    }
+
+    .badge-info {
+        background-color: #E3F2FD;
+        color: #1565C0;
+        border: 1px solid #BBDEFB;
+    }
+
     /* ========== RESPONSIVE STYLES ========== */
 
     /* Tablet Breakpoint */
@@ -1841,10 +2107,6 @@ unset($__errorArgs, $__bag); ?>
         .horizontal-nav a {
             padding: 12px 20px;
             font-size: 14px;
-        }
-        
-        .time-group {
-            grid-template-columns: 1fr;
         }
         
         .support-options {
@@ -1905,6 +2167,11 @@ unset($__errorArgs, $__bag); ?>
         .action-buttons .btn {
             width: 100%;
             justify-content: center;
+        }
+        
+        .table-container {
+            padding: 15px;
+            overflow-x: auto;
         }
     }
 
@@ -1982,9 +2249,10 @@ unset($__errorArgs, $__bag); ?>
 <?php $__env->stopPush(); ?>
 
 <?php $__env->startPush('scripts'); ?>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Pengaturan venue scripts loaded');
+        console.log('Pengaturan admin scripts loaded');
         
         // ========== INITIALIZATION ==========
         initSettingsPage();
@@ -2034,35 +2302,16 @@ unset($__errorArgs, $__bag); ?>
             });
         }
 
-        // ========== CHARACTER COUNT FOR DESCRIPTION ==========
-        const descriptionTextarea = document.getElementById('deskripsi');
-        if (descriptionTextarea) {
-            const charCount = document.getElementById('charCount');
-            
-            descriptionTextarea.addEventListener('input', function() {
-                const count = this.value.length;
-                charCount.textContent = count;
-                
-                if (count > 500) {
-                    charCount.style.color = 'var(--danger-color)';
-                    this.classList.add('is-invalid');
-                } else if (count > 450) {
-                    charCount.style.color = 'var(--warning-color)';
-                    this.classList.remove('is-invalid');
-                } else {
-                    charCount.style.color = 'var(--success-color)';
-                    this.classList.remove('is-invalid');
-                }
-            });
-            
-            // Initial count
-            charCount.textContent = descriptionTextarea.value.length;
-        }
-
         // ========== PHOTO UPLOAD HANDLING ==========
         window.handlePhotoUpload = function(input) {
             const file = input.files[0];
             if (!file) return;
+            
+            console.log('File selected:', {
+                name: file.name,
+                size: file.size,
+                type: file.type
+            });
             
             // Validasi ukuran file (max 2MB)
             if (file.size > 2 * 1024 * 1024) {
@@ -2105,6 +2354,7 @@ unset($__errorArgs, $__bag); ?>
                     img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
                     img.onerror = function() {
                         this.src = '<?php echo e(asset('images/default-avatar.png')); ?>';
+                        this.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
                     };
                     
                     previewContainer.insertBefore(img, loadingElement);
@@ -2112,15 +2362,14 @@ unset($__errorArgs, $__bag); ?>
                     // Hide loading
                     if (loadingElement) loadingElement.style.display = 'none';
                     
-                    // Store in localStorage for persistence during form submission
-                    localStorage.setItem('profilePhotoPreview', e.target.result);
-                    localStorage.setItem('profilePhotoUpdated', 'true');
-                    
                     // Show remove button if not already shown
                     const removeBtn = document.querySelector('.remove-btn');
                     if (removeBtn && removeBtn.style.display === 'none') {
                         removeBtn.style.display = 'block';
                     }
+                    
+                    // Reset remove photo flag
+                    document.getElementById('removePhoto').value = '0';
                 }
             };
             
@@ -2160,44 +2409,14 @@ unset($__errorArgs, $__bag); ?>
                     const removeBtn = document.querySelector('.remove-btn');
                     if (removeBtn) removeBtn.style.display = 'none';
                 }
-                
-                // Clear localStorage
-                localStorage.removeItem('profilePhotoPreview');
-                localStorage.removeItem('profilePhotoUpdated');
             }
         };
-
-        // ========== RESTORE PHOTO FROM LOCALSTORAGE ==========
-        function restorePhotoPreview() {
-            const preview = localStorage.getItem('profilePhotoPreview');
-            const previewContainer = document.getElementById('photoPreview');
-            
-            if (preview && previewContainer && !previewContainer.querySelector('img')) {
-                // Remove default avatar if exists
-                const defaultAvatar = previewContainer.querySelector('.default-avatar');
-                if (defaultAvatar) defaultAvatar.remove();
-                
-                // Add image from localStorage
-                const img = document.createElement('img');
-                img.src = preview;
-                img.alt = 'Preview Foto';
-                img.className = 'profile-image';
-                img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
-                
-                previewContainer.insertBefore(img, document.getElementById('photoLoading'));
-                
-                // Show remove button
-                const removeBtn = document.querySelector('.remove-btn');
-                if (removeBtn) removeBtn.style.display = 'block';
-            }
-        }
-        
-        // Restore on page load
-        restorePhotoPreview();
 
         // ========== TOGGLE PASSWORD VISIBILITY ==========
         window.togglePassword = function(inputId) {
             const input = document.getElementById(inputId);
+            if (!input) return;
+            
             const toggleBtn = input.nextElementSibling;
             const icon = toggleBtn.querySelector('i');
             
@@ -2214,11 +2433,6 @@ unset($__errorArgs, $__bag); ?>
 
         // ========== PASSWORD STRENGTH CHECKER ==========
         window.checkPasswordStrength = function(password) {
-            const strengthBar = document.querySelector('.strength-bar');
-            const strengthText = document.querySelector('.strength-text');
-            
-            if (!strengthBar || !strengthText) return;
-            
             let strength = 0;
             let color = '#e74c3c';
             let text = 'Lemah';
@@ -2260,22 +2474,35 @@ unset($__errorArgs, $__bag); ?>
                 text = 'Sangat Lemah';
             }
             
-            // Update UI
-            if (strengthBar) {
-                strengthBar.style.width = strength + '%';
-                strengthBar.style.backgroundColor = color;
-            }
-            if (strengthText) {
-                strengthText.textContent = 'Kekuatan password: ' + text;
-                strengthText.style.color = color;
-            }
-            
-            // Check password match
-            checkPasswordMatch();
-            
             // Update requirements
             updatePasswordRequirements(password);
         };
+
+        // ========== PASSWORD REQUIREMENTS UPDATER ==========
+        function updatePasswordRequirements(password) {
+            const requirements = {
+                'req-length': password.length >= 8,
+                'req-lowercase': /[a-z]/.test(password),
+                'req-uppercase': /[A-Z]/.test(password),
+                'req-number': /[0-9]/.test(password),
+                'req-special': /[^A-Za-z0-9]/.test(password)
+            };
+            
+            for (const [id, isValid] of Object.entries(requirements)) {
+                const element = document.getElementById(id);
+                if (element) {
+                    if (isValid) {
+                        element.classList.add('valid');
+                        const icon = element.querySelector('i');
+                        if (icon) icon.style.color = 'var(--success-color)';
+                    } else {
+                        element.classList.remove('valid');
+                        const icon = element.querySelector('i');
+                        if (icon) icon.style.color = '#ddd';
+                    }
+                }
+            }
+        }
 
         // ========== PASSWORD MATCH CHECKER ==========
         function checkPasswordMatch() {
@@ -2308,32 +2535,6 @@ unset($__errorArgs, $__bag); ?>
             }
         });
 
-        // ========== PASSWORD REQUIREMENTS UPDATER ==========
-        function updatePasswordRequirements(password) {
-            const requirements = {
-                'req-length': password.length >= 8,
-                'req-lowercase': /[a-z]/.test(password),
-                'req-uppercase': /[A-Z]/.test(password),
-                'req-number': /[0-9]/.test(password),
-                'req-special': /[^A-Za-z0-9]/.test(password)
-            };
-            
-            for (const [id, isValid] of Object.entries(requirements)) {
-                const element = document.getElementById(id);
-                if (element) {
-                    if (isValid) {
-                        element.classList.add('valid');
-                        const icon = element.querySelector('i');
-                        if (icon) icon.style.color = 'var(--success-color)';
-                    } else {
-                        element.classList.remove('valid');
-                        const icon = element.querySelector('i');
-                        if (icon) icon.style.color = '#ddd';
-                    }
-                }
-            }
-        }
-
         // ========== RESET PROFILE FORM ==========
         window.resetProfilForm = function() {
             if (confirm('Reset semua perubahan? Data akan dikembalikan ke nilai semula.')) {
@@ -2341,60 +2542,53 @@ unset($__errorArgs, $__bag); ?>
                 if (form) {
                     form.reset();
                     
-                    // Reset photo preview
+                    // Reset photo preview to original
                     const previewContainer = document.getElementById('photoPreview');
+                    const userHasPhoto = <?php echo json_encode($hasPhoto, 15, 512) ?>;
+                    const photoUrl = <?php echo json_encode($photoUrl, 15, 512) ?>;
+                    
                     if (previewContainer) {
-                        previewContainer.innerHTML = `
-                            <div class="default-avatar">
-                                <i class="fas fa-user"></i>
-                                <span>Foto Profil</span>
-                            </div>
-                            <div class="photo-loading" id="photoLoading" style="display: none;">
-                                <i class="fas fa-spinner fa-spin"></i>
-                            </div>
-                        `;
+                        if (userHasPhoto && photoUrl) {
+                            previewContainer.innerHTML = `
+                                <img src="${photoUrl}" 
+                                     alt="Foto Profil" 
+                                     id="currentProfilePhoto"
+                                     class="profile-image"
+                                     data-filename="<?php echo e($user->profile_photo); ?>"
+                                     onerror="this.onerror=null; this.src='<?php echo e(asset('images/default-avatar.png')); ?>'; this.classList.add('default-avatar-img');"
+                                     style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                <div class="photo-loading" id="photoLoading" style="display: none;">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </div>
+                            `;
+                            // Show remove button
+                            const removeBtn = document.querySelector('.remove-btn');
+                            if (removeBtn) removeBtn.style.display = 'block';
+                        } else {
+                            previewContainer.innerHTML = `
+                                <div class="default-avatar">
+                                    <i class="fas fa-user"></i>
+                                    <span>Foto Profil</span>
+                                </div>
+                                <div class="photo-loading" id="photoLoading" style="display: none;">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </div>
+                            `;
+                            // Hide remove button
+                            const removeBtn = document.querySelector('.remove-btn');
+                            if (removeBtn) removeBtn.style.display = 'none';
+                        }
                     }
-                    
-                    // Clear localStorage
-                    localStorage.removeItem('profilePhotoPreview');
-                    localStorage.removeItem('profilePhotoUpdated');
-                    
-                    // Hide remove button
-                    const removeBtn = document.querySelector('.remove-btn');
-                    if (removeBtn) removeBtn.style.display = 'none';
                     
                     // Reset remove photo flag
                     const removePhotoInput = document.getElementById('removePhoto');
                     if (removePhotoInput) removePhotoInput.value = '0';
-                    
-                    // Reset character count
-                    const charCount = document.getElementById('charCount');
-                    if (charCount) charCount.textContent = '0';
-                }
-            }
-        };
-
-        // ========== RESET SCHEDULE FORM ==========
-        window.resetScheduleForm = function() {
-            if (confirm('Reset jadwal ke nilai default?')) {
-                const form = document.getElementById('scheduleForm');
-                if (form) {
-                    form.reset();
-                    
-                    // Set default values
-                    const daySelect = document.getElementById('hari');
-                    const openTime = document.getElementById('jam-buka');
-                    const closeTime = document.getElementById('jam-tutup');
-                    
-                    if (daySelect) daySelect.value = 'setiap hari';
-                    if (openTime) openTime.value = '08:00';
-                    if (closeTime) closeTime.value = '22:00';
                 }
             }
         };
 
         // ========== FORM SUBMISSION HANDLERS ==========
-        const forms = ['profileForm', 'scheduleForm', 'notificationForm', 'securityForm'];
+        const forms = ['profileForm', 'systemForm', 'formTambahAdmin', 'notificationForm', 'securityForm'];
         
         forms.forEach(formId => {
             const form = document.getElementById(formId);
@@ -2418,245 +2612,124 @@ unset($__errorArgs, $__bag); ?>
             }
         });
 
-        // ========== FAQ SEARCH FUNCTIONALITY ==========
-        window.searchFAQ = function() {
-            const searchTerm = document.getElementById('search-faq').value.toLowerCase().trim();
-            const faqItems = document.querySelectorAll('.faq-item');
-            const noResults = document.getElementById('noResults');
-            let found = false;
-            
-            if (searchTerm === '') {
-                // Reset search - show all items
-                faqItems.forEach(item => {
-                    item.style.display = 'block';
-                });
-                if (noResults) noResults.style.display = 'none';
-                return;
-            }
-            
-            faqItems.forEach(item => {
-                const question = item.querySelector('.faq-question span')?.textContent.toLowerCase() || '';
-                const answer = item.querySelector('.faq-answer p')?.textContent.toLowerCase() || '';
+        // ========== EDIT ADMIN MODAL ==========
+        document.querySelectorAll('.edit-admin').forEach(button => {
+            button.addEventListener('click', function() {
+                const adminId = this.getAttribute('data-id');
+                const adminName = this.getAttribute('data-name');
+                const adminEmail = this.getAttribute('data-email');
+                const adminPhone = this.getAttribute('data-phone') || '';
+                const adminRole = this.getAttribute('data-role');
+                const adminStatus = this.getAttribute('data-status');
                 
-                if (question.includes(searchTerm) || answer.includes(searchTerm)) {
-                    item.style.display = 'block';
-                    found = true;
-                    
-                    // Auto expand matching items
-                    const questionElement = item.querySelector('.faq-question');
-                    if (questionElement && !questionElement.classList.contains('active')) {
-                        toggleFAQ(questionElement);
-                    }
-                } else {
-                    item.style.display = 'none';
+                // Set nilai form edit
+                document.getElementById('edit_admin_id').value = adminId;
+                document.getElementById('edit_admin_name').value = adminName;
+                document.getElementById('edit_admin_email').value = adminEmail;
+                document.getElementById('edit_admin_phone').value = adminPhone;
+                document.getElementById('edit_admin_role').value = adminRole;
+                document.getElementById('edit_admin_status').value = adminStatus;
+                
+                // Reset password fields
+                document.getElementById('edit_admin_password').value = '';
+                document.getElementById('edit_admin_password_confirmation').value = '';
+                
+                // Show modal
+                const editModalElement = document.getElementById('editAdminModal');
+                if (editModalElement) {
+                    const editModal = new bootstrap.Modal(editModalElement);
+                    editModal.show();
                 }
-            });
-            
-            // Show/hide no results message
-            if (noResults) {
-                noResults.style.display = found ? 'none' : 'block';
-            }
-        };
-        
-        // Add search functionality
-        const searchInput = document.getElementById('search-faq');
-        if (searchInput) {
-            // Search on enter
-            searchInput.addEventListener('keyup', function(e) {
-                if (e.key === 'Enter') {
-                    searchFAQ();
-                }
-            });
-            
-            // Live search with debounce
-            let searchTimeout;
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(searchFAQ, 300);
-            });
-        }
-
-        // ========== FAQ TOGGLE FUNCTION ==========
-        window.toggleFAQ = function(element) {
-            const answer = element.nextElementSibling;
-            const icon = element.querySelector('i');
-            
-            if (!answer || !icon) return;
-            
-            if (answer.classList.contains('show')) {
-                answer.classList.remove('show');
-                element.classList.remove('active');
-                icon.style.transform = 'rotate(0deg)';
-            } else {
-                // Close other open FAQs
-                document.querySelectorAll('.faq-answer.show').forEach(openAnswer => {
-                    openAnswer.classList.remove('show');
-                    const prevElement = openAnswer.previousElementSibling;
-                    if (prevElement && prevElement.classList.contains('faq-question')) {
-                        prevElement.classList.remove('active');
-                        const prevIcon = prevElement.querySelector('i');
-                        if (prevIcon) prevIcon.style.transform = 'rotate(0deg)';
-                    }
-                });
-                
-                // Open clicked FAQ
-                answer.classList.add('show');
-                element.classList.add('active');
-                icon.style.transform = 'rotate(180deg)';
-                
-                // Smooth scroll to FAQ
-                setTimeout(() => {
-                    element.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'nearest'
-                    });
-                }, 300);
-            }
-        };
-
-        // ========== FAQ CATEGORY FILTER ==========
-        document.querySelectorAll('.category-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                // Update active tab
-                document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                
-                const category = this.getAttribute('data-category');
-                const faqItems = document.querySelectorAll('.faq-item');
-                const faqCategories = document.querySelectorAll('.faq-category');
-                
-                if (category === 'all') {
-                    // Show all
-                    faqItems.forEach(item => item.style.display = 'block');
-                    faqCategories.forEach(cat => cat.style.display = 'block');
-                } else {
-                    // Filter by category
-                    faqItems.forEach(item => {
-                        if (item.getAttribute('data-category') === category) {
-                            item.style.display = 'block';
-                        } else {
-                            item.style.display = 'none';
-                        }
-                    });
-                    
-                    // Show/hide category headers
-                    faqCategories.forEach(cat => {
-                        if (cat.getAttribute('data-category') === category) {
-                            cat.style.display = 'block';
-                        } else {
-                            cat.style.display = 'none';
-                        }
-                    });
-                }
-                
-                // Reset search
-                if (searchInput) {
-                    searchInput.value = '';
-                    searchFAQ(); // Reset search results
-                }
-                
-                // Hide no results
-                const noResults = document.getElementById('noResults');
-                if (noResults) noResults.style.display = 'none';
             });
         });
 
-        // ========== BROWSER NOTIFICATIONS ==========
-        window.toggleBrowserNotifications = function(checkbox) {
-            const permissionDiv = document.getElementById('browserPermission');
-            if (permissionDiv) {
-                permissionDiv.style.display = checkbox.checked ? 'block' : 'none';
-            }
-        };
+        // ========== DELETE ADMIN MODAL ==========
+        document.querySelectorAll('.delete-admin').forEach(button => {
+            button.addEventListener('click', function() {
+                const adminId = this.getAttribute('data-id');
+                const adminName = this.getAttribute('data-name');
+                const adminEmail = this.getAttribute('data-email');
+                
+                // Set data di modal
+                document.getElementById('hapus_admin_id').value = adminId;
+                document.getElementById('hapusAdminTitle').textContent = `Apakah Anda yakin ingin menghapus admin "${adminName}"?`;
+                document.getElementById('hapusAdminEmail').textContent = adminEmail;
+                
+                // Get status from table
+                const row = this.closest('tr');
+                const statusBadge = row.querySelector('.badge')?.textContent || 'Aktif';
+                document.getElementById('hapusAdminStatus').textContent = statusBadge;
+                
+                // Get join date
+                const joinDate = row.querySelector('td:nth-child(7)')?.textContent || '-';
+                document.getElementById('hapusAdminJoined').textContent = joinDate;
+                
+                // Show modal
+                const deleteModalElement = document.getElementById('hapusAdminModal');
+                if (deleteModalElement) {
+                    const deleteModal = new bootstrap.Modal(deleteModalElement);
+                    deleteModal.show();
+                }
+            });
+        });
 
-        window.requestBrowserPermission = function() {
-            if ('Notification' in window) {
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        alert('Notifikasi browser diizinkan!');
-                        const browserPermissionDiv = document.getElementById('browserPermission');
-                        if (browserPermissionDiv) {
-                            browserPermissionDiv.innerHTML = `
-                                <p class="permission-info" style="color: var(--success-color);">
-                                    <i class="fas fa-check-circle"></i>
-                                    Notifikasi browser telah diizinkan
-                                </p>
-                            `;
-                        }
-                    } else {
-                        alert('Anda tidak mengizinkan notifikasi browser.');
-                        const browserCheckbox = document.getElementById('browser-notifications');
-                        if (browserCheckbox) browserCheckbox.checked = false;
-                    }
-                });
-            } else {
-                alert('Browser Anda tidak mendukung notifikasi.');
-                const browserCheckbox = document.getElementById('browser-notifications');
-                if (browserCheckbox) browserCheckbox.checked = false;
-            }
-        };
-
-        // ========== LOGOUT OTHER SESSIONS ==========
-        window.logoutOtherSessions = function() {
-            const currentPassword = prompt('Masukkan password Anda untuk mengkonfirmasi logout dari semua sesi lain:');
-            
-            if (!currentPassword) {
-                return;
-            }
-            
-            if (confirm('Apakah Anda yakin ingin logout dari semua sesi lain? Anda akan tetap login di perangkat ini.')) {
-                fetch("<?php echo e(route('venue.pengaturan.logout-other-sessions')); ?>", {
+        // ========== CREATE BACKUP ==========
+        window.createBackup = function() {
+            if (confirm('Apakah Anda yakin ingin membuat backup sekarang?')) {
+                // Submit the backup form
+                fetch("<?php echo e(route('admin.pengaturan.backup.now')); ?>", {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        current_password: currentPassword
-                    })
+                    }
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Berhasil logout dari semua sesi lain');
+                        alert('Backup berhasil dibuat: ' + data.filename);
+                        location.reload();
                     } else {
-                        alert(data.message || 'Gagal logout dari sesi lain');
+                        alert('Gagal membuat backup: ' + data.message);
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Terjadi kesalahan saat logout');
+                    alert('Terjadi kesalahan saat membuat backup');
                 });
             }
         };
 
-        // ========== SHOW ALL SESSIONS ==========
-        window.showAllSessions = function() {
-            alert('Fitur ini akan segera hadir!');
+        // ========== LOGO HANDLING (Simulasi) ==========
+        window.handleLogoUpload = function(input) {
+            alert('Fitur upload logo akan datang');
+            input.value = '';
+        };
+
+        window.removeLogo = function() {
+            if (confirm('Apakah Anda yakin ingin menghapus logo?')) {
+                document.getElementById('removeLogoInput').value = '1';
+                const previewContainer = document.getElementById('logoPreview');
+                if (previewContainer) {
+                    previewContainer.innerHTML = `
+                        <div class="default-avatar">
+                            <i class="fas fa-flag"></i>
+                            <span>Logo App</span>
+                        </div>
+                    `;
+                }
+            }
         };
 
         // ========== OPEN WHATSAPP SUPPORT ==========
         window.openWhatsAppSupport = function(adminNumber = null) {
-            // PERUBAHAN: WhatsApp number yang benar
             let phoneNumber = adminNumber || '6285731125834';
             const message = encodeURIComponent('Halo Admin CariArena, saya butuh bantuan terkait: ');
             const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
             
             window.open(whatsappUrl, '_blank');
         };
-
-        // ========== AUTO-HIDE ALERTS ==========
-        setTimeout(() => {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                alert.style.opacity = '0';
-                alert.style.transition = 'opacity 0.5s ease';
-                setTimeout(() => {
-                    alert.style.display = 'none';
-                }, 500);
-            });
-        }, 5000);
 
         // ========== ADD EVENT LISTENERS FOR WHATSAPP BUTTONS ==========
         // Add click events for WhatsApp buttons
@@ -2679,8 +2752,20 @@ unset($__errorArgs, $__bag); ?>
             }
         });
 
-        console.log('All settings scripts initialized successfully');
+        // ========== AUTO-HIDE ALERTS ==========
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                alert.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                }, 500);
+            });
+        }, 5000);
+
+        console.log('All admin settings scripts initialized successfully');
     });
 </script>
 <?php $__env->stopPush(); ?>
-<?php echo $__env->make('layouts.venue', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\CariArena\resources\views/venue/pengaturan.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\CariArena\resources\views/admin/pengaturan.blade.php ENDPATH**/ ?>

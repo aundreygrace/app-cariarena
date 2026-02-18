@@ -1,8 +1,8 @@
-@extends('layouts.user')
-@section('title', 'Profil Saya')
-@section('styles')
+
+<?php $__env->startSection('title', 'Profil Saya'); ?>
+<?php $__env->startSection('styles'); ?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
 <style>
 /* ===== BACKGROUND UTAMA ===== */
 body {
@@ -1628,50 +1628,52 @@ input:checked + .toggle-slider:before {
     background: var(--primary-hover);
 }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="profile-container">
     <!-- Notifikasi -->
-    @if(session('success'))
+    <?php if(session('success')): ?>
         <div class="alert alert-success">
-            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+            <i class="fas fa-check-circle me-2"></i><?php echo e(session('success')); ?>
+
         </div>
-    @endif
+    <?php endif; ?>
     
-    @if(session('error'))
+    <?php if(session('error')): ?>
         <div class="alert alert-error">
-            <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+            <i class="fas fa-exclamation-circle me-2"></i><?php echo e(session('error')); ?>
+
         </div>
-    @endif
+    <?php endif; ?>
     
-    @if($errors->any())
+    <?php if($errors->any()): ?>
         <div class="alert alert-error">
             <i class="fas fa-exclamation-triangle me-2"></i>
             <ul class="mb-0">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
+                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <li><?php echo e($error); ?></li>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </ul>
         </div>
-    @endif
+    <?php endif; ?>
 
     <!-- Horizontal Navigation -->
     <div class="horizontal-nav">
-        <a href="#" class="{{ session('activeSection', 'edit-profil') == 'edit-profil' ? 'active' : '' }}" data-target="edit-profil">Edit Profil</a>
-        <a href="#" class="{{ session('activeSection') == 'venue-favorit' ? 'active' : '' }}" data-target="venue-favorit">Venue Favorit</a>
-        <a href="#" class="{{ session('activeSection') == 'metode-pembayaran' ? 'active' : '' }}" data-target="metode-pembayaran">Metode Pembayaran</a>
-        <a href="#" class="{{ session('activeSection') == 'notifikasi' ? 'active' : '' }}" data-target="notifikasi">Notifikasi</a>
-        <a href="#" class="{{ session('activeSection') == 'keamanan' ? 'active' : '' }}" data-target="keamanan">Keamanan</a>
-        <a href="#" class="{{ session('activeSection') == 'pengaturan' ? 'active' : '' }}" data-target="pengaturan">Pengaturan</a>
-        <a href="#" class="{{ session('activeSection') == 'faq-support' ? 'active' : '' }}" data-target="faq-support">FAQ & Support</a>
+        <a href="#" class="<?php echo e(session('activeSection', 'edit-profil') == 'edit-profil' ? 'active' : ''); ?>" data-target="edit-profil">Edit Profil</a>
+        <a href="#" class="<?php echo e(session('activeSection') == 'venue-favorit' ? 'active' : ''); ?>" data-target="venue-favorit">Venue Favorit</a>
+        <a href="#" class="<?php echo e(session('activeSection') == 'metode-pembayaran' ? 'active' : ''); ?>" data-target="metode-pembayaran">Metode Pembayaran</a>
+        <a href="#" class="<?php echo e(session('activeSection') == 'notifikasi' ? 'active' : ''); ?>" data-target="notifikasi">Notifikasi</a>
+        <a href="#" class="<?php echo e(session('activeSection') == 'keamanan' ? 'active' : ''); ?>" data-target="keamanan">Keamanan</a>
+        <a href="#" class="<?php echo e(session('activeSection') == 'pengaturan' ? 'active' : ''); ?>" data-target="pengaturan">Pengaturan</a>
+        <a href="#" class="<?php echo e(session('activeSection') == 'faq-support' ? 'active' : ''); ?>" data-target="faq-support">FAQ & Support</a>
     </div>
 
     <div class="profile-content">
         <!-- Konten Utama -->
         <div class="settings-content">
             <!-- Edit Profil Section -->
-            <section id="edit-profil" class="settings-section {{ session('activeSection', 'edit-profil') == 'edit-profil' ? 'active' : '' }}">
+            <section id="edit-profil" class="settings-section <?php echo e(session('activeSection', 'edit-profil') == 'edit-profil' ? 'active' : ''); ?>">
                 <h2>👤 Edit Profil</h2>
                 
                 <div class="edit-profile-layout">
@@ -1680,7 +1682,7 @@ input:checked + .toggle-slider:before {
                         <!-- Avatar dan Info Dasar -->
                         <div class="profile-header">
                             <div class="photo-preview" id="photoPreview">
-                            @php
+                            <?php
                                 $user = auth()->user();
                                 //Using Model Accessor - Auto detect role!
                                 $photoUrl = $user->profile_photo_url;
@@ -1691,53 +1693,54 @@ input:checked + .toggle-slider:before {
                                     $photoUrl .= '?t=' . time();
                                     session()->forget('profile_photo_updated');
                                 }
-                            @endphp
+                            ?>
                                 
-                                @if($hasPhoto && $photoUrl)
-                                    <img src="{{ $photoUrl }}" 
+                                <?php if($hasPhoto && $photoUrl): ?>
+                                    <img src="<?php echo e($photoUrl); ?>" 
                                          alt="Foto Profil" 
                                          id="currentProfilePhoto"
                                          class="profile-image"
-                                         data-filename="{{ $user->profile_photo }}"
-                                         onerror="this.onerror=null; this.src='{{ asset('images/default-avatar.png') }}';">
-                                @else
+                                         data-filename="<?php echo e($user->profile_photo); ?>"
+                                         onerror="this.onerror=null; this.src='<?php echo e(asset('images/default-avatar.png')); ?>';">
+                                <?php else: ?>
                                     <div class="user-avatar">
-                                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                                        <?php echo e(strtoupper(substr(Auth::user()->name, 0, 1))); ?>
+
                                     </div>
-                                @endif
+                                <?php endif; ?>
                                 <div class="photo-loading" id="photoLoading" style="display: none;">
                                     <i class="fas fa-spinner fa-spin"></i>
                                 </div>
                             </div>
                             <div class="profile-header-info">
-                                <h3>{{ Auth::user()->name }}</h3>
-                                <p>{{ Auth::user()->email }}</p>
+                                <h3><?php echo e(Auth::user()->name); ?></h3>
+                                <p><?php echo e(Auth::user()->email); ?></p>
                             </div>
                         </div>
 
                         <!-- Stats -->
                         <div class="profile-stats">
                             <div class="stat-item">
-                                @php
+                                <?php
                                     use App\Models\Pemesanan;
                                     $totalPemesanan = Pemesanan::where('user_id', Auth::id())->count();
-                                @endphp
-                                <span class="stat-number">{{ $totalPemesanan }}</span>
+                                ?>
+                                <span class="stat-number"><?php echo e($totalPemesanan); ?></span>
                                 <span class="stat-label">Pemesanan</span>
                             </div>
                             <div class="stat-item">
-                                @php
+                                <?php
                                     use Illuminate\Support\Facades\DB;
                                     $venueCount = DB::table('booking')
                                         ->where('user_id', Auth::id())
                                         ->distinct('venue_id')
                                         ->count('venue_id');
-                                @endphp
-                                <span class="stat-number">{{ $venueCount }}</span>
+                                ?>
+                                <span class="stat-number"><?php echo e($venueCount); ?></span>
                                 <span class="stat-label">Venue</span>
                             </div>
                             <div class="stat-item">
-                                @php
+                                <?php
                                     use App\Models\Transaksi;
                                     $totalTransaksi = Transaksi::where('pengguna', Auth::user()->email)->sum('amount');
                                     if ($totalTransaksi >= 1000000) {
@@ -1745,8 +1748,8 @@ input:checked + .toggle-slider:before {
                                     } else {
                                         $formattedTotal = number_format($totalTransaksi, 0, ',', '.');
                                     }
-                                @endphp
-                                <span class="stat-number">Rp {{ $formattedTotal }}</span>
+                                ?>
+                                <span class="stat-number">Rp <?php echo e($formattedTotal); ?></span>
                                 <span class="stat-label">Total</span>
                             </div>
                         </div>
@@ -1758,32 +1761,32 @@ input:checked + .toggle-slider:before {
                                 <i class="fa-solid fa-phone"></i>
                                 <div>
                                     <strong>Nomor Telepon:</strong>
-                                    <span>{{ Auth::user()->phone ?? 'Belum diisi' }}</span>
+                                    <span><?php echo e(Auth::user()->phone ?? 'Belum diisi'); ?></span>
                                 </div>
                             </div>
                             <div class="info-item">
                                 <i class="fa-solid fa-location-dot"></i>
                                 <div>
                                     <strong>Alamat:</strong>
-                                    <span>{{ Auth::user()->description ?? 'Belum diisi' }}</span>
+                                    <span><?php echo e(Auth::user()->description ?? 'Belum diisi'); ?></span>
                                 </div>
                             </div>
                             <div class="info-item">
                                 <i class="fa-regular fa-calendar"></i>
                                 <div>
                                     <strong>Bergabung Sejak:</strong>
-                                    <span>{{ Auth::user()->created_at ? Auth::user()->created_at->format('F Y') : '-' }}</span>
+                                    <span><?php echo e(Auth::user()->created_at ? Auth::user()->created_at->format('F Y') : '-'); ?></span>
                                 </div>
                             </div>
-                            @if(Auth::user()->venue_name)
+                            <?php if(Auth::user()->venue_name): ?>
                             <div class="info-item">
                                 <i class="fa-solid fa-store"></i>
                                 <div>
                                     <strong>Nama Venue:</strong>
-                                    <span>{{ Auth::user()->venue_name }}</span>
+                                    <span><?php echo e(Auth::user()->venue_name); ?></span>
                                 </div>
                             </div>
-                            @endif
+                            <?php endif; ?>
                         </div>
 
                         <!-- Tombol Logout -->
@@ -1795,26 +1798,26 @@ input:checked + .toggle-slider:before {
                     <!-- Bagian Kanan: Form Edit -->
                     <div class="edit-form-section">
                         <h3>Ubah Data Profil</h3>
-                        <form id="editProfileForm" method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data">
-                            @csrf
-                            @method('PUT')
+                        <form id="editProfileForm" method="POST" action="<?php echo e(route('profile.update')); ?>" enctype="multipart/form-data">
+                            <?php echo csrf_field(); ?>
+                            <?php echo method_field('PUT'); ?>
                             
                             <!-- Upload Foto Profil -->
                             <div class="form-group">
                                 <label>Foto Profil</label>
                                 <div class="photo-upload">
                                     <div class="photo-preview" id="formPhotoPreview">
-                                        @if($hasPhoto && $photoUrl)
-                                            <img src="{{ $photoUrl }}" 
+                                        <?php if($hasPhoto && $photoUrl): ?>
+                                            <img src="<?php echo e($photoUrl); ?>" 
                                                  alt="Foto Profil" 
                                                  class="profile-image"
                                                  id="formProfileImage">
-                                        @else
+                                        <?php else: ?>
                                             <div class="default-avatar">
                                                 <i class="fas fa-user"></i>
                                                 <span>Foto Profil</span>
                                             </div>
-                                        @endif
+                                        <?php endif; ?>
                                         <div class="photo-loading" id="formPhotoLoading" style="display: none;">
                                             <i class="fas fa-spinner fa-spin"></i>
                                         </div>
@@ -1825,64 +1828,141 @@ input:checked + .toggle-slider:before {
                                         <div class="upload-btn" onclick="document.getElementById('profile_photo').click()">
                                             <i class="fas fa-upload"></i> Upload Foto Baru
                                         </div>
-                                        @if($hasPhoto)
+                                        <?php if($hasPhoto): ?>
                                         <div class="remove-btn" onclick="removeProfilePhoto()">
                                             <i class="fas fa-trash"></i> Hapus Foto
                                         </div>
-                                        @endif
+                                        <?php endif; ?>
                                         <p class="upload-info">Format: JPG, PNG (Maks. 2MB)</p>
                                         <input type="hidden" name="remove_photo" id="removePhoto" value="0">
                                     </div>
                                 </div>
-                                @error('profile_photo')
-                                    <span class="invalid-feedback">{{ $message }}</span>
-                                @enderror
+                                <?php $__errorArgs = ['profile_photo'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <span class="invalid-feedback"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
                             
                             <div class="form-group">
                                 <label for="nama-lengkap">Nama Lengkap *</label>
-                                <input type="text" id="nama-lengkap" name="name" placeholder="Masukkan nama lengkap" value="{{ old('name', Auth::user()->name) }}" required class="@error('name') is-invalid @enderror">
-                                @error('name')
-                                    <span class="invalid-feedback">{{ $message }}</span>
-                                @enderror
+                                <input type="text" id="nama-lengkap" name="name" placeholder="Masukkan nama lengkap" value="<?php echo e(old('name', Auth::user()->name)); ?>" required class="<?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                                <?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <span class="invalid-feedback"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
                             
                             <div class="form-group">
                                 <label for="email">Email *</label>
-                                <input type="email" id="email" name="email" placeholder="Masukkan email" value="{{ old('email', Auth::user()->email) }}" required class="@error('email') is-invalid @enderror">
+                                <input type="email" id="email" name="email" placeholder="Masukkan email" value="<?php echo e(old('email', Auth::user()->email)); ?>" required class="<?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
                                 <small>Email akan digunakan untuk login dan notifikasi</small>
-                                @error('email')
-                                    <span class="invalid-feedback">{{ $message }}</span>
-                                @enderror
+                                <?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <span class="invalid-feedback"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
                             
                             <div class="form-group">
                                 <label for="telepon">Nomor Telepon</label>
-                                <input type="tel" id="telepon" name="phone" placeholder="Contoh: 081234567890" value="{{ old('phone', Auth::user()->phone) }}" class="@error('phone') is-invalid @enderror">
+                                <input type="tel" id="telepon" name="phone" placeholder="Contoh: 081234567890" value="<?php echo e(old('phone', Auth::user()->phone)); ?>" class="<?php $__errorArgs = ['phone'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
                                 <small>Nomor telepon akan digunakan untuk konfirmasi booking</small>
-                                @error('phone')
-                                    <span class="invalid-feedback">{{ $message }}</span>
-                                @enderror
+                                <?php $__errorArgs = ['phone'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <span class="invalid-feedback"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
                             
                             <div class="form-group">
                                 <label for="venue_name">Nama Venue (Opsional)</label>
-                                <input type="text" id="venue_name" name="venue_name" placeholder="Masukkan nama venue jika pemilik" value="{{ old('venue_name', Auth::user()->venue_name) }}" class="@error('venue_name') is-invalid @enderror">
+                                <input type="text" id="venue_name" name="venue_name" placeholder="Masukkan nama venue jika pemilik" value="<?php echo e(old('venue_name', Auth::user()->venue_name)); ?>" class="<?php $__errorArgs = ['venue_name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
                                 <small>Hanya diisi jika Anda pemilik venue</small>
-                                @error('venue_name')
-                                    <span class="invalid-feedback">{{ $message }}</span>
-                                @enderror
+                                <?php $__errorArgs = ['venue_name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <span class="invalid-feedback"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
                             
                             <div class="form-group">
                                 <label for="description">Deskripsi/Alamat</label>
-                                <textarea id="description" name="description" placeholder="Masukkan deskripsi atau alamat lengkap" class="@error('description') is-invalid @enderror">{{ old('description', Auth::user()->description) }}</textarea>
+                                <textarea id="description" name="description" placeholder="Masukkan deskripsi atau alamat lengkap" class="<?php $__errorArgs = ['description'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"><?php echo e(old('description', Auth::user()->description)); ?></textarea>
                                 <div class="char-count">
-                                    <span id="charCount">{{ strlen(old('description', Auth::user()->description)) }}</span>/500 karakter
+                                    <span id="charCount"><?php echo e(strlen(old('description', Auth::user()->description))); ?></span>/500 karakter
                                 </div>
-                                @error('description')
-                                    <span class="invalid-feedback">{{ $message }}</span>
-                                @enderror
+                                <?php $__errorArgs = ['description'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <span class="invalid-feedback"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
                                                 
                             <div class="action-buttons">
@@ -1897,10 +1977,10 @@ input:checked + .toggle-slider:before {
             </section>
 
             <!-- Venue Favorit Section -->
-            <section id="venue-favorit" class="settings-section {{ session('activeSection') == 'venue-favorit' ? 'active' : '' }}">
+            <section id="venue-favorit" class="settings-section <?php echo e(session('activeSection') == 'venue-favorit' ? 'active' : ''); ?>">
                 <h2>⭐ Venue Favorit</h2>
                 
-                @php
+                <?php
                     $venueIds = DB::table('booking')
                         ->where('user_id', Auth::id())
                         ->distinct()
@@ -1921,23 +2001,23 @@ input:checked + .toggle-slider:before {
                             ->limit(5)
                             ->get();
                     }
-                @endphp
+                ?>
                 
-                @forelse($favoriteVenues as $venue)
+                <?php $__empty_1 = true; $__currentLoopData = $favoriteVenues; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $venue): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                 <div class="venue-card">
                     <div class="venue-header">
                         <div>
-                            <h3 class="venue-title">{{ $venue->name ?? 'Nama Venue' }}</h3>
+                            <h3 class="venue-title"><?php echo e($venue->name ?? 'Nama Venue'); ?></h3>
                             <div class="venue-badges">
-                                <span class="badge badge-sport">{{ $venue->category ?? 'Umum' }}</span>
-                                @if(($venue->status ?? '') == 'Aktif')
-                                <span class="badge badge-available">{{ $venue->status }}</span>
-                                @else
-                                <span class="badge badge-full">{{ $venue->status ?? 'Tidak Aktif' }}</span>
-                                @endif
+                                <span class="badge badge-sport"><?php echo e($venue->category ?? 'Umum'); ?></span>
+                                <?php if(($venue->status ?? '') == 'Aktif'): ?>
+                                <span class="badge badge-available"><?php echo e($venue->status); ?></span>
+                                <?php else: ?>
+                                <span class="badge badge-full"><?php echo e($venue->status ?? 'Tidak Aktif'); ?></span>
+                                <?php endif; ?>
                             </div>
                         </div>
-                        <button class="favorite-btn" data-venue="{{ $venue->id }}">
+                        <button class="favorite-btn" data-venue="<?php echo e($venue->id); ?>">
                             <i class="fa-regular fa-heart"></i>
                         </button>
                     </div>
@@ -1945,88 +2025,89 @@ input:checked + .toggle-slider:before {
                     <div class="venue-details">
                         <div class="venue-detail">
                             <i class="fa-solid fa-location-dot"></i>
-                            <span>{{ Str::limit($venue->address ?? 'Alamat tidak tersedia', 50) }}</span>
+                            <span><?php echo e(Str::limit($venue->address ?? 'Alamat tidak tersedia', 50)); ?></span>
                         </div>
                         <div class="venue-detail">
                             <i class="fa-solid fa-star"></i>
-                            <span>{{ number_format($venue->rating ?? 0, 1) }} ({{ $venue->reviews_count ?? 0 }} reviews)</span>
+                            <span><?php echo e(number_format($venue->rating ?? 0, 1)); ?> (<?php echo e($venue->reviews_count ?? 0); ?> reviews)</span>
                         </div>
                         <div class="venue-detail">
                             <i class="fa-solid fa-money-bill"></i>
-                            <span>Rp {{ number_format($venue->price_per_hour ?? 0, 0, ',', '.') }}/jam</span>
+                            <span>Rp <?php echo e(number_format($venue->price_per_hour ?? 0, 0, ',', '.')); ?>/jam</span>
                         </div>
                     </div>
                     
                     <div class="venue-footer">
-                        <span class="venue-price">Rp {{ number_format($venue->price_per_hour ?? 0, 0, ',', '.') }}/jam</span>
-                        <a href="{{ route('venue.detail', $venue->id ?? '#') }}" class="btn">
+                        <span class="venue-price">Rp <?php echo e(number_format($venue->price_per_hour ?? 0, 0, ',', '.')); ?>/jam</span>
+                        <a href="<?php echo e(route('venue.detail', $venue->id ?? '#')); ?>" class="btn">
                             <i class="fa-solid fa-calendar-check me-2"></i>Pesan
                         </a>
                     </div>
                 </div>
-                @empty
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <div id="empty-favorite" class="text-center py-8">
                     <i class="fa-regular fa-heart text-4xl text-gray-300 mb-4"></i>
                     <h4 class="text-lg font-medium text-gray-600 mb-2">Belum ada venue favorit</h4>
                     <p class="text-gray-500 text-sm">Mulailah dengan memesan venue untuk menambahkannya ke favorit</p>
-                    <a href="{{ route('venue.list') }}" class="btn mt-4">
+                    <a href="<?php echo e(route('venue.list')); ?>" class="btn mt-4">
                         <i class="fa-solid fa-search me-2"></i>Cari Venue
                     </a>
                 </div>
-                @endforelse
+                <?php endif; ?>
             </section>
 
             <!-- Metode Pembayaran Section -->
-            <section id="metode-pembayaran" class="settings-section {{ session('activeSection') == 'metode-pembayaran' ? 'active' : '' }}">
+            <section id="metode-pembayaran" class="settings-section <?php echo e(session('activeSection') == 'metode-pembayaran' ? 'active' : ''); ?>">
                 <h2>💳 Metode Pembayaran</h2>
                 
-                @php
+                <?php
                     $transactions = DB::table('transactions')
                         ->where('pengguna', Auth::user()->email)
                         ->orderBy('transaction_date', 'desc')
                         ->limit(5)
                         ->get();
-                @endphp
+                ?>
                 
-                @if($transactions->count() > 0)
+                <?php if($transactions->count() > 0): ?>
                 <h3>Riwayat Metode Pembayaran</h3>
                 <div class="mb-6">
-                    @foreach($transactions as $transaction)
-                    <div class="payment-method" data-method="{{ $transaction->metode_pembayaran }}">
+                    <?php $__currentLoopData = $transactions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $transaction): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <div class="payment-method" data-method="<?php echo e($transaction->metode_pembayaran); ?>">
                         <div class="payment-header">
                             <div class="payment-icon">
-                                @if($transaction->metode_pembayaran == 'transfer')
+                                <?php if($transaction->metode_pembayaran == 'transfer'): ?>
                                 <i class="fa-solid fa-building-columns"></i>
-                                @elseif($transaction->metode_pembayaran == 'cash')
+                                <?php elseif($transaction->metode_pembayaran == 'cash'): ?>
                                 <i class="fa-solid fa-money-bill"></i>
-                                @else
+                                <?php else: ?>
                                 <i class="fa-solid fa-wallet"></i>
-                                @endif
+                                <?php endif; ?>
                             </div>
                             <div class="payment-info">
                                 <h4>
-                                    @if($transaction->metode_pembayaran == 'transfer')
+                                    <?php if($transaction->metode_pembayaran == 'transfer'): ?>
                                     Transfer Bank
-                                    @elseif($transaction->metode_pembayaran == 'cash')
+                                    <?php elseif($transaction->metode_pembayaran == 'cash'): ?>
                                     Tunai
-                                    @else
+                                    <?php else: ?>
                                     E-Wallet
-                                    @endif
+                                    <?php endif; ?>
                                 </h4>
-                                <p>Rp {{ number_format($transaction->amount, 0, ',', '.') }} - {{ date('d M Y', strtotime($transaction->transaction_date)) }}</p>
-                                <p class="text-sm {{ $transaction->status == 'completed' ? 'text-green-600' : ($transaction->status == 'pending' ? 'text-yellow-600' : 'text-red-600') }}">
-                                    Status: {{ ucfirst($transaction->status) }}
+                                <p>Rp <?php echo e(number_format($transaction->amount, 0, ',', '.')); ?> - <?php echo e(date('d M Y', strtotime($transaction->transaction_date))); ?></p>
+                                <p class="text-sm <?php echo e($transaction->status == 'completed' ? 'text-green-600' : ($transaction->status == 'pending' ? 'text-yellow-600' : 'text-red-600')); ?>">
+                                    Status: <?php echo e(ucfirst($transaction->status)); ?>
+
                                 </p>
                             </div>
                         </div>
                     </div>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
-                @endif
+                <?php endif; ?>
                 
                 <h3>Tambahkan Kartu Baru</h3>
                 <form id="paymentForm">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     
                     <div class="form-group">
                         <label for="nomor-kartu">Nomor Kartu</label>
@@ -2095,34 +2176,34 @@ input:checked + .toggle-slider:before {
             </section>
 
             <!-- Notifikasi Section -->
-            <section id="notifikasi" class="settings-section {{ session('activeSection') == 'notifikasi' ? 'active' : '' }}">
+            <section id="notifikasi" class="settings-section <?php echo e(session('activeSection') == 'notifikasi' ? 'active' : ''); ?>">
                 <h2>🔔 Notifikasi</h2>
                 
-                @php
+                <?php
                     $notifications = DB::table('notifications')
                         ->where('user_id', Auth::id())
                         ->orderBy('created_at', 'desc')
                         ->limit(10)
                         ->get();
-                @endphp
+                ?>
                 
                 <h3>Notifikasi Terbaru</h3>
-                @if($notifications->count() > 0)
-                    @foreach($notifications as $notification)
-                    <div class="notification-item {{ $notification->is_read ? '' : 'bg-blue-50' }}">
+                <?php if($notifications->count() > 0): ?>
+                    <?php $__currentLoopData = $notifications; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $notification): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <div class="notification-item <?php echo e($notification->is_read ? '' : 'bg-blue-50'); ?>">
                         <div class="notification-info">
-                            <h5>{{ $notification->title }}</h5>
-                            <p>{{ $notification->message }}</p>
-                            <small class="text-gray-500">{{ \Carbon\Carbon::parse($notification->created_at)->diffForHumans() }}</small>
+                            <h5><?php echo e($notification->title); ?></h5>
+                            <p><?php echo e($notification->message); ?></p>
+                            <small class="text-gray-500"><?php echo e(\Carbon\Carbon::parse($notification->created_at)->diffForHumans()); ?></small>
                         </div>
-                        @if(!$notification->is_read)
+                        <?php if(!$notification->is_read): ?>
                         <span class="badge badge-sport">Baru</span>
-                        @endif
+                        <?php endif; ?>
                     </div>
-                    @endforeach
-                @else
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                <?php else: ?>
                     <p class="text-gray-500 text-center py-4">Belum ada notifikasi</p>
-                @endif
+                <?php endif; ?>
                 
                 <h3>Pengaturan Notifikasi</h3>
                 <div class="notification-item">
@@ -2178,11 +2259,11 @@ input:checked + .toggle-slider:before {
             </section>
 
             <!-- Keamanan Section -->
-            <section id="keamanan" class="settings-section {{ session('activeSection') == 'keamanan' ? 'active' : '' }}">
+            <section id="keamanan" class="settings-section <?php echo e(session('activeSection') == 'keamanan' ? 'active' : ''); ?>">
                 <h2>🔒 Keamanan</h2>
                 
                 <form id="securityForm">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     
                     <div class="form-group">
                         <label for="password-saat-ini">Password Saat Ini</label>
@@ -2226,8 +2307,8 @@ input:checked + .toggle-slider:before {
                 <div class="notification-item">
                     <div class="notification-info">
                         <h5>Sesi Browser Saat Ini</h5>
-                        <p>{{ request()->header('User-Agent') }}</p>
-                        <small class="text-gray-500">Login sejak: {{ \Carbon\Carbon::now()->format('d M Y H:i') }}</small>
+                        <p><?php echo e(request()->header('User-Agent')); ?></p>
+                        <small class="text-gray-500">Login sejak: <?php echo e(\Carbon\Carbon::now()->format('d M Y H:i')); ?></small>
                     </div>
                     <button class="btn btn-outline btn-sm" onclick="endOtherSessions()">
                         <i class="fa-solid fa-power-off me-1"></i> Hapus Sesi Lain
@@ -2236,7 +2317,7 @@ input:checked + .toggle-slider:before {
             </section>
 
             <!-- Pengaturan Section -->
-            <section id="pengaturan" class="settings-section {{ session('activeSection') == 'pengaturan' ? 'active' : '' }}">
+            <section id="pengaturan" class="settings-section <?php echo e(session('activeSection') == 'pengaturan' ? 'active' : ''); ?>">
                 <h2>⚙ Pengaturan</h2>
                 
                 <h3>Pengaturan Aplikasi</h3>
@@ -2296,23 +2377,23 @@ input:checked + .toggle-slider:before {
                             <i class="fa-solid fa-envelope"></i>
                             <div>
                                 <strong>Email</strong>
-                                <span>{{ Auth::user()->email }}</span>
+                                <span><?php echo e(Auth::user()->email); ?></span>
                             </div>
-                            @if(Auth::user()->email_verified_at)
+                            <?php if(Auth::user()->email_verified_at): ?>
                             <span class="verified-badge">
                                 <i class="fa-solid fa-check"></i> Terverifikasi
                             </span>
-                            @else
+                            <?php else: ?>
                             <span class="verified-badge" style="background: #fef3c7; color: #92400e;">
                                 <i class="fa-solid fa-exclamation"></i> Belum diverifikasi
                             </span>
-                            @endif
+                            <?php endif; ?>
                         </div>
                         <div class="account-info-item">
                             <i class="fa-solid fa-calendar"></i>
                             <div>
                                 <strong>Bergabung</strong>
-                                <span>{{ Auth::user()->created_at ? Auth::user()->created_at->format('d F Y') : '-' }}</span>
+                                <span><?php echo e(Auth::user()->created_at ? Auth::user()->created_at->format('d F Y') : '-'); ?></span>
                             </div>
                         </div>
                     </div>
@@ -2342,7 +2423,7 @@ input:checked + .toggle-slider:before {
             </section>
 
             <!-- FAQ & Support Section -->
-            <section id="faq-support" class="settings-section {{ session('activeSection') == 'faq-support' ? 'active' : '' }}">
+            <section id="faq-support" class="settings-section <?php echo e(session('activeSection') == 'faq-support' ? 'active' : ''); ?>">
                 <h2>❓ FAQ & Support</h2>
                 
                 <div class="help-search">
@@ -2468,8 +2549,8 @@ input:checked + .toggle-slider:before {
             <button id="cancel-logout" class="logout-btn logout-cancel">
                 Batal
             </button>
-            <form id="logout-form" method="POST" action="{{ route('logout') }}">
-                @csrf
+            <form id="logout-form" method="POST" action="<?php echo e(route('logout')); ?>">
+                <?php echo csrf_field(); ?>
                 <button type="submit" id="confirm-logout" class="logout-btn logout-confirm">
                     Logout
                 </button>
@@ -2477,9 +2558,9 @@ input:checked + .toggle-slider:before {
         </div>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
+<?php $__env->startSection('scripts'); ?>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // ========== NAVIGASI ANTAR SECTION ==========
@@ -2487,7 +2568,7 @@ input:checked + .toggle-slider:before {
             const menuLinks = document.querySelectorAll('.horizontal-nav a');
             const settingsSections = document.querySelectorAll('.settings-section');
             
-            const activeSection = '{{ session('activeSection', 'edit-profil') }}';
+            const activeSection = '<?php echo e(session('activeSection', 'edit-profil')); ?>';
             
             menuLinks.forEach(link => {
                 if (link.getAttribute('data-target') === activeSection) {
@@ -2587,7 +2668,7 @@ input:checked + .toggle-slider:before {
                     img.className = 'profile-image';
                     img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%;';
                     img.onerror = function() {
-                        this.src = '{{ asset('images/default-avatar.png') }}';
+                        this.src = '<?php echo e(asset('images/default-avatar.png')); ?>';
                     };
                     
                     previewContainer.insertBefore(img, loadingElement);
@@ -2728,17 +2809,17 @@ input:checked + .toggle-slider:before {
                 
                 if (previewContainer) {
                     previewContainer.innerHTML = `
-                        @if($hasPhoto && $photoUrl)
-                            <img src="{{ $photoUrl }}" 
+                        <?php if($hasPhoto && $photoUrl): ?>
+                            <img src="<?php echo e($photoUrl); ?>" 
                                  alt="Foto Profil" 
                                  class="profile-image"
                                  id="formProfileImage">
-                        @else
+                        <?php else: ?>
                             <div class="default-avatar">
                                 <i class="fas fa-user"></i>
                                 <span>Foto Profil</span>
                             </div>
-                        @endif
+                        <?php endif; ?>
                         <div class="photo-loading" id="formPhotoLoading" style="display: none;">
                             <i class="fas fa-spinner fa-spin"></i>
                         </div>
@@ -2747,18 +2828,19 @@ input:checked + .toggle-slider:before {
                 
                 if (mainPreviewContainer) {
                     mainPreviewContainer.innerHTML = `
-                        @if($hasPhoto && $photoUrl)
-                            <img src="{{ $photoUrl }}" 
+                        <?php if($hasPhoto && $photoUrl): ?>
+                            <img src="<?php echo e($photoUrl); ?>" 
                                  alt="Foto Profil" 
                                  id="currentProfilePhoto"
                                  class="profile-image"
-                                 data-filename="{{ $user->profile_photo }}"
-                                 onerror="this.onerror=null; this.src='{{ asset('images/default-avatar.png') }}';">
-                        @else
+                                 data-filename="<?php echo e($user->profile_photo); ?>"
+                                 onerror="this.onerror=null; this.src='<?php echo e(asset('images/default-avatar.png')); ?>';">
+                        <?php else: ?>
                             <div class="user-avatar">
-                                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                                <?php echo e(strtoupper(substr(Auth::user()->name, 0, 1))); ?>
+
                             </div>
-                        @endif
+                        <?php endif; ?>
                         <div class="photo-loading" id="photoLoading" style="display: none;">
                             <i class="fas fa-spinner fa-spin"></i>
                         </div>
@@ -2767,16 +2849,16 @@ input:checked + .toggle-slider:before {
                 
                 localStorage.removeItem('profilePhotoPreview');
                 
-                @if(!$hasPhoto)
+                <?php if(!$hasPhoto): ?>
                 const removeBtn = document.querySelector('.remove-btn');
                 if (removeBtn) removeBtn.style.display = 'none';
-                @endif
+                <?php endif; ?>
                 
                 const removePhotoInput = document.getElementById('removePhoto');
                 if (removePhotoInput) removePhotoInput.value = '0';
                 
                 const charCount = document.getElementById('charCount');
-                if (charCount) charCount.textContent = '{{ strlen(Auth::user()->description) }}';
+                if (charCount) charCount.textContent = '<?php echo e(strlen(Auth::user()->description)); ?>';
             }
         };
 
@@ -3194,4 +3276,5 @@ input:checked + .toggle-slider:before {
         }, 5000);
     });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.user', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\CariArena\resources\views/user/akun.blade.php ENDPATH**/ ?>

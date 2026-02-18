@@ -1,6 +1,6 @@
-@extends('user.app')
 
-@section('header')
+
+<?php $__env->startSection('header'); ?>
 <header class="main-header p-4 pt-4 pb-12 rounded-b-3xl">
     <!-- Ikon bola voli animasi menggelinding (hanya desktop) -->
     <i class="fas fa-volleyball-ball volleyball-icon icon-1" aria-hidden="true"></i>
@@ -19,7 +19,7 @@
         </div>
 
         <!-- Konten Header Dinamis Berdasarkan Halaman -->
-        @if(request()->routeIs('beranda'))
+        <?php if(request()->routeIs('beranda')): ?>
         <!-- Header untuk Beranda -->
         <div class="center-header fade-in-up" style="animation-delay: 0.2s;">
             <!-- WRAPPER UNTUK BOLA VOLI -->
@@ -43,7 +43,7 @@
                 </svg>
             </div>
         </div>
-        @else
+        <?php else: ?>
         <!-- Header untuk Halaman Lain - DENGAN WRAPPER YANG SAMA -->
         <div class="center-header fade-in-up" style="animation-delay: 0.2s;">
             <!-- WRAPPER UNTUK BOLA VOLI -->
@@ -51,16 +51,16 @@
                 <i class="fas fa-volleyball-ball volley-icon-main" aria-hidden="true" style="display: inline-block;"></i>
             </div>
             
-            @if(request()->routeIs('akun'))
+            <?php if(request()->routeIs('akun')): ?>
             <h1 class="text-3xl font-semibold text-white mt-4 mb-4 text-center">Profil Saya</h1>
             <p class="text-gray-100 text-sm mb-6 text-center">Kelola akun & preferensi anda</p>
-            @elseif(request()->routeIs('pesan.index'))
+            <?php elseif(request()->routeIs('pesan.index')): ?>
             <h1 class="text-3xl font-semibold text-white mt-4 mb-4 text-center">Booking</h1>
             <p class="text-gray-100 text-sm mb-6 text-center">Kelola pemesanan venue olahraga</p>
-            @elseif(request()->routeIs('riwayat'))
+            <?php elseif(request()->routeIs('riwayat')): ?>
             <h1 class="text-3xl font-semibold text-white mt-4 mb-4 text-center">Riwayat Booking</h1>
             <p class="text-gray-100 text-sm mb-6 text-center">Lihat dan kelola semua pesanan yang telah Anda buat</p>
-            @elseif(request()->routeIs('pesan.riwayat-booking'))
+            <?php elseif(request()->routeIs('pesan.riwayat-booking')): ?>
             <!-- TAMBAHKAN STYLE INLINE KHUSUS UNTUK HALAMAN DETAIL BOOKING -->
             <style>
                 /* Fix tambahan untuk halaman detail booking */
@@ -80,24 +80,24 @@
             </style>
             <h1 class="text-3xl font-semibold text-white mt-4 mb-4 text-center">Detail Booking</h1>
             <p class="text-gray-100 text-sm mb-6 text-center">Detail Lengkap Booking Venue Anda</p>
-            @else
-            <h1 class="text-3xl font-semibold text-white mt-4 mb-4 text-center">@yield('title', 'CariArena')</h1>
-            <p class="text-gray-100 text-sm mb-6 text-center">@yield('subtitle', '')</p>
-            @endif
+            <?php else: ?>
+            <h1 class="text-3xl font-semibold text-white mt-4 mb-4 text-center"><?php echo $__env->yieldContent('title', 'CariArena'); ?></h1>
+            <p class="text-gray-100 text-sm mb-6 text-center"><?php echo $__env->yieldContent('subtitle', ''); ?></p>
+            <?php endif; ?>
         </div>
-        @endif
+        <?php endif; ?>
         
     </div>
 </header>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('footer')
+<?php $__env->startSection('footer'); ?>
 <nav class="footer-floating">
     <div class="footer-nav">
         
         <!-- Tombol Beranda -->
         <!-- PHP logic dihapus karena sekarang dikontrol oleh JavaScript -->
-        <a href="{{ route('beranda') }}" class="footer-menu" id="menu-beranda">
+        <a href="<?php echo e(route('beranda')); ?>" class="footer-menu" id="menu-beranda">
             <svg xmlns="http://www.w3.org/2000/svg" class="footer-icon" viewBox="0 0 24 24">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
@@ -106,7 +106,7 @@
         </a>
 
         <!-- Tombol Pesan -->
-        <a href="{{ route('pesan.index') }}" class="footer-menu" id="menu-pesan">
+        <a href="<?php echo e(route('pesan.index')); ?>" class="footer-menu" id="menu-pesan">
             <svg xmlns="http://www.w3.org/2000/svg" class="footer-icon" viewBox="0 0 24 24">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
@@ -114,7 +114,7 @@
         </a>
 
         <!-- Tombol Riwayat -->
-        <a href="{{ route('riwayat') }}" class="footer-menu" id="menu-riwayat">
+        <a href="<?php echo e(route('riwayat')); ?>" class="footer-menu" id="menu-riwayat">
             <svg xmlns="http://www.w3.org/2000/svg" class="footer-icon" viewBox="0 0 24 24">
                 <path d="M21.5 2v6h-6"></path>
                 <path d="M2.5 22v-6h6"></path>
@@ -124,7 +124,7 @@
         </a>
 
         <!-- Tombol Akun -->
-        <a href="{{ route('akun') }}" class="footer-menu" id="menu-akun">
+        <a href="<?php echo e(route('akun')); ?>" class="footer-menu" id="menu-akun">
             <svg xmlns="http://www.w3.org/2000/svg" class="footer-icon" viewBox="0 0 24 24">
                 <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
@@ -160,7 +160,8 @@
         }
     });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
-@endsection
+<?php $__env->startSection('scripts'); ?>
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('user.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\CariArena\resources\views/layouts/user.blade.php ENDPATH**/ ?>

@@ -69,6 +69,7 @@ class Kernel extends HttpKernel
         'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        
         //Spatie Permission
         'role' => Role::class,
         'permission' => Permission::class,
@@ -87,6 +88,9 @@ class Kernel extends HttpKernel
         'admin.guest' => \App\Http\Middleware\RedirectIfAdminAuthenticated::class,
         'venue.guest' => \App\Http\Middleware\RedirectIfVenueAuthenticated::class,
         'user.guest' => \App\Http\Middleware\RedirectIfUserAuthenticated::class,
+        
+        // ✅ TAMBAHAN BARU - Middleware untuk cleanup expired slots
+        'cleanup.slots' => \App\Http\Middleware\CleanupExpiredSlots::class,
     ];
 
     /**

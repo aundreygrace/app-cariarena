@@ -1,6 +1,6 @@
-@extends('layouts.user')
-@section('title', 'Detail Booking')
-@section('styles')
+
+<?php $__env->startSection('title', 'Detail Booking'); ?>
+<?php $__env->startSection('styles'); ?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
     body:has(.main-content-container) .volley-icon-main,
@@ -684,9 +684,9 @@
         }
     }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <!-- Main Content Container -->
 <div class="main-content-container">
     <!-- Booking Detail Card -->
@@ -706,7 +706,8 @@
                 <div class="booking-id-display">
                     <div class="booking-id-label">ID BOOKING</div>
                     <div class="booking-id-value">
-                        {{ $booking->booking_code }}
+                        <?php echo e($booking->booking_code); ?>
+
                     </div>
                 </div>
             </div>
@@ -719,16 +720,17 @@
                     </div>
                     <div class="venue-details">
                         <h2 class="venue-name">
-                            {{ strtoupper($venue->name) }}
+                            <?php echo e(strtoupper($venue->name)); ?>
+
                         </h2>
                         <div class="venue-meta">
                             <div class="meta-item">
                                 <i class="fas fa-map-marker-alt"></i>
-                                <span>{{ strtoupper($venue->category) }}</span>
+                                <span><?php echo e(strtoupper($venue->category)); ?></span>
                             </div>
                             <div class="meta-item">
                                 <i class="fas fa-star"></i>
-                                <span>{{ number_format($venue->rating, 1) }}/5.0</span>
+                                <span><?php echo e(number_format($venue->rating, 1)); ?>/5.0</span>
                             </div>
                             <div class="meta-item">
                                 <i class="fas fa-clock"></i>
@@ -737,7 +739,7 @@
                         </div>
                         <div class="venue-address">
                             <i class="fas fa-location-dot"></i>
-                            <span>{{ $venue->address }}</span>
+                            <span><?php echo e($venue->address); ?></span>
                         </div>
                     </div>
                 </div>
@@ -753,7 +755,8 @@
                         <div class="detail-title">TANGGAL BOOKING</div>
                     </div>
                     <div class="detail-content">
-                        {{ \Carbon\Carbon::parse($booking->tanggal_booking)->translatedFormat('l, d F Y') }}
+                        <?php echo e(\Carbon\Carbon::parse($booking->tanggal_booking)->translatedFormat('l, d F Y')); ?>
+
                     </div>
                     <div class="detail-subtitle">Tanggal pemesanan venue</div>
                 </div>
@@ -766,7 +769,7 @@
                         <div class="detail-title">WAKTU & DURASI</div>
                     </div>
                     <div class="detail-content">
-                        {{ substr($booking->waktu_booking, 0, 5) }} ({{ $booking->durasi }} JAM)
+                        <?php echo e(substr($booking->waktu_booking, 0, 5)); ?> (<?php echo e($booking->durasi); ?> JAM)
                     </div>
                     <div class="detail-subtitle">Durasi penggunaan venue</div>
                 </div>
@@ -790,7 +793,8 @@
                         <div class="detail-title">TOTAL PEMBAYARAN</div>
                     </div>
                     <div class="detail-content" id="booking-total">
-                    RP {{ number_format($totalPaid, 0, ',', '.') }}
+                    RP <?php echo e(number_format($totalPaid, 0, ',', '.')); ?>
+
                     </div>
 
                     <div class="detail-subtitle">Sudah termasuk pajak & admin</div>
@@ -836,11 +840,11 @@
             <!-- Action Buttons -->
             <div class="action-section">
                 <div class="action-buttons">
-                    <a href="{{ route('riwayat') }}" class="btn btn-secondary">
+                    <a href="<?php echo e(route('riwayat')); ?>" class="btn btn-secondary">
                         <i class="fas fa-history"></i>
                         RIWAYAT BOOKING
                     </a>
-                    <a href="{{ route('beranda') }}" class="btn btn-home">
+                    <a href="<?php echo e(route('beranda')); ?>" class="btn btn-home">
                         <i class="fas fa-home"></i>
                         KEMBALI KE BERANDA
                     </a>
@@ -849,9 +853,9 @@
         </div>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
+<?php $__env->startSection('scripts'); ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js"></script>
 <script>
     // ========== FIX TAMBAHAN UNTUK BOLA VOLI ==========
@@ -951,12 +955,12 @@
         updateDataFromUrlParams();
 
         // Jika ada data dari session PHP, update juga
-        @if(session('success'))
-            alert('{{ session("success") }}');
-        @endif
+        <?php if(session('success')): ?>
+            alert('<?php echo e(session("success")); ?>');
+        <?php endif; ?>
 
-        @if(isset($successData) && $successData)
-            const successData = @json($successData);
+        <?php if(isset($successData) && $successData): ?>
+            const successData = <?php echo json_encode($successData, 15, 512) ?>;
             
             if (successData.booking_code) {
                 document.getElementById('booking-code').textContent = successData.booking_code;
@@ -989,7 +993,7 @@
                 document.getElementById('booking-players').textContent = `${successData.players} ORANG`;
             }
             
-        @endif
+        <?php endif; ?>
     });
 
     // Fix tambahan saat halaman selesai load
@@ -997,4 +1001,5 @@
         setTimeout(forceVolleyIconCenter, 100);
     });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.user', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\CariArena\resources\views/user/pesan/riwayat-booking.blade.php ENDPATH**/ ?>

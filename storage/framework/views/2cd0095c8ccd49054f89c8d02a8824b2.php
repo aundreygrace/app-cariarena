@@ -1,6 +1,6 @@
-@extends('layouts.user')
-@section('title', 'Booking Venue - ' . ($venue->name ?? 'Venue'))
-@section('content')
+
+<?php $__env->startSection('title', 'Booking Venue - ' . ($venue->name ?? 'Venue')); ?>
+<?php $__env->startSection('content'); ?>
 
 <style>
 * {
@@ -1442,18 +1442,19 @@ body {
 
 </style>
 
-<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
 
 <div class="desktop-container">
     <div class="venue-info-card mobile-optimized">
         <div class="venue-name">
             <i class="fas fa-map-pin"></i>
-            {{ $venue->name ?? 'Venue Tidak Ditemukan' }}
+            <?php echo e($venue->name ?? 'Venue Tidak Ditemukan'); ?>
+
         </div>
         <div class="venue-details">
             <div class="venue-detail-item">
                 <i class="fas fa-map-marker-alt"></i>
-                <span>{{ $venue->location ?? 'Lokasi tidak tersedia' }}</span>
+                <span><?php echo e($venue->location ?? 'Lokasi tidak tersedia'); ?></span>
             </div>
             <div class="venue-detail-item">
                 <i class="fas fa-clock"></i>
@@ -1461,11 +1462,11 @@ body {
             </div>
             <div class="venue-detail-item">
                 <i class="fas fa-tag"></i>
-                <span>Kategori: {{ $venue->category ?? 'Olahraga' }}</span>
+                <span>Kategori: <?php echo e($venue->category ?? 'Olahraga'); ?></span>
             </div>
             <div class="venue-detail-item">
                 <i class="fas fa-money-bill-wave"></i>
-                <span>Harga: Rp {{ number_format($venue->price_per_hour ?? 0, 0, ',', '.') }}/jam</span>
+                <span>Harga: Rp <?php echo e(number_format($venue->price_per_hour ?? 0, 0, ',', '.')); ?>/jam</span>
             </div>
         </div>
     </div>
@@ -1570,7 +1571,7 @@ body {
                 <div class="summary-label">
                     <i class="fas fa-map-marker-alt"></i> Venue :
                 </div>
-                <div class="summary-value" id="summary-venue">{{ $venue->name ?? 'Venue' }}</div>
+                <div class="summary-value" id="summary-venue"><?php echo e($venue->name ?? 'Venue'); ?></div>
             </div>
             <div class="summary-row">
                 <div class="summary-label">
@@ -1628,18 +1629,18 @@ body {
 </div>
 
 <!-- Form untuk submit booking -->
-<form id="booking-form" method="POST" action="{{ route('pesan.process-booking') }}" style="display: none;">
-    @csrf
-    <input type="hidden" name="venue_id" value="{{ $venue->id }}">
+<form id="booking-form" method="POST" action="<?php echo e(route('pesan.process-booking')); ?>" style="display: none;">
+    <?php echo csrf_field(); ?>
+    <input type="hidden" name="venue_id" value="<?php echo e($venue->id); ?>">
     <input type="hidden" name="tanggal_booking" id="form-tanggal-booking">
     <input type="hidden" name="waktu_booking" id="form-waktu-booking">
     <input type="hidden" name="durasi" id="form-durasi">
 </form>
 
 <script>
-    const backendSelectedDate = "{{ $selectedDate }}";
+    const backendSelectedDate = "<?php echo e($selectedDate); ?>";
     // ✅ Data dari backend
-    const jadwalList = @json($jadwalList ?? []);
+    const jadwalList = <?php echo json_encode($jadwalList ?? [], 15, 512) ?>;
 
     // ✅ DEBUG: Log data yang diterima (HAPUS setelah production)
     console.log('=== INIT BOOKING DATA ===');
@@ -1650,10 +1651,10 @@ body {
     }
 
     let currentVenue = {
-        id: {{ $venue->id ?? 0 }},
-        price_per_hour: {{ $venue->price_per_hour ?? 0 }},
-        name: "{{ $venue->name ?? 'Venue' }}",
-        address: "{{ $venue->location ?? 'Lokasi tidak tersedia' }}"
+        id: <?php echo e($venue->id ?? 0); ?>,
+        price_per_hour: <?php echo e($venue->price_per_hour ?? 0); ?>,
+        name: "<?php echo e($venue->name ?? 'Venue'); ?>",
+        address: "<?php echo e($venue->location ?? 'Lokasi tidak tersedia'); ?>"
     };
 
     let existingBookings = [];
@@ -2151,7 +2152,7 @@ function proceedToPayment() {
         }
         
         console.log('📋 === FINAL BOOKING DATA ===');
-        console.log('Venue ID:', {{ $venue->id }});
+        console.log('Venue ID:', <?php echo e($venue->id); ?>);
         console.log('Tanggal:', tanggal);
         console.log('Waktu:', waktu);
         console.log('Durasi:', durasi);
@@ -2357,7 +2358,7 @@ function proceedToPayment() {
     }
     
     console.log('=== FINAL BOOKING DATA ===');
-    console.log('Venue ID:', {{ $venue->id }});
+    console.log('Venue ID:', <?php echo e($venue->id); ?>);
     console.log('Tanggal:', tanggal);
     console.log('Waktu:', waktu);
     console.log('Durasi:', durasi);
@@ -2397,4 +2398,5 @@ function proceedToPayment() {
 
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.user', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\CariArena\resources\views/user/pesan/pembayaran.blade.php ENDPATH**/ ?>

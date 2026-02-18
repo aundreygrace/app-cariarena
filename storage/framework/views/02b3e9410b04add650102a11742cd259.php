@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $venue->name }}</title>
+    <title><?php echo e($venue->name); ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* ==== VARIABLES ==== */
@@ -595,14 +595,14 @@
         <div class="venue-detail-card">
             <!-- Venue Image -->
             <div class="venue-image-section">
-                <img src="{{ $venue->photo_url }}" 
-                        alt="{{ $venue->name }}"
-                            onerror="this.src='{{ $venue->getDefaultPhotoUrl() }}'">
+                <img src="<?php echo e($venue->photo_url); ?>" 
+                        alt="<?php echo e($venue->name); ?>"
+                            onerror="this.src='<?php echo e($venue->getDefaultPhotoUrl()); ?>'">
                 <div class="venue-overlay">
-                    <span class="badge badge-category">{{ strtoupper($venue->category) }}</span>
+                    <span class="badge badge-category"><?php echo e(strtoupper($venue->category)); ?></span>
                     <span class="badge badge-rating">
                         <i class="fas fa-star"></i>
-                        {{ number_format($averageRating, 1) }}/5
+                        <?php echo e(number_format($averageRating, 1)); ?>/5
                     </span>
                 </div>
             </div>
@@ -611,10 +611,10 @@
             <div class="venue-content">
                 <!-- Header dengan nama dan harga -->
                 <div class="venue-header">
-                    <h2 class="venue-name">{{ $venue->name }}</h2>
+                    <h2 class="venue-name"><?php echo e($venue->name); ?></h2>
                     <div class="venue-price">
                         <div class="price-label">Mulai dari</div>
-                        <div class="price-tag">Rp {{ number_format($venue->price_per_hour, 0, ',', '.') }}/jam</div>
+                        <div class="price-tag">Rp <?php echo e(number_format($venue->price_per_hour, 0, ',', '.')); ?>/jam</div>
                     </div>
                 </div>
 
@@ -622,7 +622,7 @@
                 <div class="venue-info">
                     <div class="info-item">
                         <i class="fas fa-map-marker-alt"></i>
-                        <span>{{ $venue->name }}</span>
+                        <span><?php echo e($venue->name); ?></span>
                     </div>
                     <div class="info-item">
                         <i class="fas fa-clock"></i>
@@ -630,11 +630,11 @@
                     </div>
                     <div class="info-item">
                         <i class="fas fa-basketball"></i>
-                        <span>Kategori: {{ $venue->category }}</span>
+                        <span>Kategori: <?php echo e($venue->category); ?></span>
                     </div>
                     <div class="info-item">
                         <i class="fas fa-star"></i>
-                        <span>Rating: {{ number_format($averageRating, 1) }}/5.0 ({{ $reviewsCount }} ulasan)</span>
+                        <span>Rating: <?php echo e(number_format($averageRating, 1)); ?>/5.0 (<?php echo e($reviewsCount); ?> ulasan)</span>
                     </div>
                 </div>
 
@@ -645,66 +645,68 @@
                         Deskripsi Venue
                     </h3>
                     <p class="description-text">
-                        {{ $venue->description ?? 'Venue olahraga berkualitas dengan fasilitas lengkap dan pelayanan terbaik. Cocok untuk berbagai kegiatan olahraga dan rekreasi.' }}
+                        <?php echo e($venue->description ?? 'Venue olahraga berkualitas dengan fasilitas lengkap dan pelayanan terbaik. Cocok untuk berbagai kegiatan olahraga dan rekreasi.'); ?>
+
                     </p>
                 </div>
 
                 <!-- Fasilitas -->
-                @if(!empty($facilities))
+                <?php if(!empty($facilities)): ?>
                 <div class="facilities-section">
                     <h3 class="section-title">
                         <i class="fas fa-list"></i>
                         Fasilitas Venue
                     </h3>
                     <div class="facilities-grid">
-                        @foreach($facilities as $facility)
+                        <?php $__currentLoopData = $facilities; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $facility): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <div class="facility-item">
-                            <i class="{{ $facility['icon'] }}"></i>
-                            <span>{{ $facility['name'] }}</span>
+                            <i class="<?php echo e($facility['icon']); ?>"></i>
+                            <span><?php echo e($facility['name']); ?></span>
                         </div>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
                 </div>
-                @endif
+                <?php endif; ?>
 
                 <!-- Ulasan -->
-                @if($reviews->count() > 0)
+                <?php if($reviews->count() > 0): ?>
                 <div class="reviews-section">
                     <div class="reviews-header">
-                        <h3 class="reviews-section-title">Ulasan ({{ $reviewsCount }})</h3>
-                        <a href="{{ route('pesan.ulasan', ['id' => $venue->id]) }}" class="see-all-btn">
+                        <h3 class="reviews-section-title">Ulasan (<?php echo e($reviewsCount); ?>)</h3>
+                        <a href="<?php echo e(route('pesan.ulasan', ['id' => $venue->id])); ?>" class="see-all-btn">
                             Lihat Semua
                         </a>
                     </div>
                     
                     <div class="reviews-grid">
-                        @foreach($reviews as $review)
+                        <?php $__currentLoopData = $reviews; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $review): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <div class="review-box">
                             <div class="review-header">
-                                <div class="profile-icon">{{ $review->initials }}</div>
-                                <div class="reviewer-name">{{ $review->customer_name }}</div>
+                                <div class="profile-icon"><?php echo e($review->initials); ?></div>
+                                <div class="reviewer-name"><?php echo e($review->customer_name); ?></div>
                             </div>
                             <div class="review-stars">
-                                @php
+                                <?php
                                     $rating = $review->rating ?? 5;
                                     $fullStars = floor($rating);
                                     $emptyStars = 5 - $fullStars;
-                                @endphp
-                                @for($i = 0; $i < $fullStars; $i++)
+                                ?>
+                                <?php for($i = 0; $i < $fullStars; $i++): ?>
                                     <i class="fas fa-star"></i>
-                                @endfor
-                                @for($i = 0; $i < $emptyStars; $i++)
+                                <?php endfor; ?>
+                                <?php for($i = 0; $i < $emptyStars; $i++): ?>
                                     <i class="far fa-star"></i>
-                                @endfor
+                                <?php endfor; ?>
                             </div>
                             <div class="review-content">
-                                {{ $review->comment }}
+                                <?php echo e($review->comment); ?>
+
                             </div>
                         </div>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
                 </div>
-                @else
+                <?php else: ?>
                 <div class="reviews-section">
                     <h3 class="section-title">
                         <i class="fas fa-comments"></i>
@@ -712,20 +714,20 @@
                     </h3>
                     <p class="description-text">Belum ada ulasan untuk venue ini.</p>
                 </div>
-                @endif
+                <?php endif; ?>
 
                 <!-- Booking Section -->
                 <div class="booking-section">
                     <div class="booking-info">
                         <div class="booking-label">Harga per jam</div>
-                        <div class="booking-price">Rp {{ number_format($venue->price_per_hour, 0, ',', '.') }}</div>
+                        <div class="booking-price">Rp <?php echo e(number_format($venue->price_per_hour, 0, ',', '.')); ?></div>
                     </div>
                     <div class="booking-actions">
-                        <a href="{{ route('pesan.index') }}" class="action-btn btn-back">
+                        <a href="<?php echo e(route('pesan.index')); ?>" class="action-btn btn-back">
                             <i class="fas fa-arrow-left"></i>
                             Kembali
                         </a>
-                        <a href="{{ route('pesan.booking', ['id' => $venue->id]) }}" class="action-btn btn-booking">
+                        <a href="<?php echo e(route('pesan.booking', ['id' => $venue->id])); ?>" class="action-btn btn-booking">
                             <i class="fas fa-calendar-check"></i>
                             Booking Sekarang
                         </a>
@@ -735,4 +737,4 @@
         </div>
     </div>
 </body>
-</html>
+</html><?php /**PATH D:\CariArena\resources\views/user/pesan/pesan-sekarang.blade.php ENDPATH**/ ?>

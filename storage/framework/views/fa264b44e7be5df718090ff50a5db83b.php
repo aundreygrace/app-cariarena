@@ -1,6 +1,6 @@
-@extends('layouts.user')
-@section('title', 'Booking Venue')
-@section('styles')
+
+<?php $__env->startSection('title', 'Booking Venue'); ?>
+<?php $__env->startSection('styles'); ?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
     /* ==== VARIABLES ==== */
@@ -674,9 +674,9 @@
         }
     }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="desktop-container">
     <div class="content-wrapper">
 
@@ -691,22 +691,23 @@
 
         <!-- Venue Grid -->
         <div class="venue-grid" id="venue-grid">
-            @if($venues->count() > 0)
-                @foreach($venues as $venue)
-                <div class="venue-card" data-category="{{ $venue->category }}">
+            <?php if($venues->count() > 0): ?>
+                <?php $__currentLoopData = $venues; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $venue): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <div class="venue-card" data-category="<?php echo e($venue->category); ?>">
                     <div class="venue-header">
                         <div class="venue-image">
-                            <img src="{{ $venue->photo_url }}" 
-                                 alt="{{ $venue->name }}" 
-                                 onerror="this.src='{{ $venue->getDefaultPhotoUrl() }}'"
+                            <img src="<?php echo e($venue->photo_url); ?>" 
+                                 alt="<?php echo e($venue->name); ?>" 
+                                 onerror="this.src='<?php echo e($venue->getDefaultPhotoUrl()); ?>'"
                                  loading="lazy">
                             <div class="venue-overlay">
-                                <span class="badge badge-category">{{ $venue->category }}</span>
+                                <span class="badge badge-category"><?php echo e($venue->category); ?></span>
                                 <span class="badge badge-status 
-                                    @if($venue->status == 'Aktif') badge-available
-                                    @elseif($venue->status == 'Maintenance') badge-maintenance
-                                    @else badge-inactive @endif">
-                                    {{ $venue->status }}
+                                    <?php if($venue->status == 'Aktif'): ?> badge-available
+                                    <?php elseif($venue->status == 'Maintenance'): ?> badge-maintenance
+                                    <?php else: ?> badge-inactive <?php endif; ?>">
+                                    <?php echo e($venue->status); ?>
+
                                 </span>
                             </div>
                         </div>
@@ -714,66 +715,67 @@
                     
                     <div class="venue-content">
                         <div class="venue-info">
-                            <h3 class="venue-name">{{ $venue->name }}</h3>
+                            <h3 class="venue-name"><?php echo e($venue->name); ?></h3>
                             <div class="venue-location">
                                 <i class="fa-solid fa-location-dot"></i>
-                                <span>{{ Str::limit($venue->address, 30) }}</span>
+                                <span><?php echo e(Str::limit($venue->address, 30)); ?></span>
                             </div>
                         </div>
 
                         <div class="venue-details">
                             <div class="venue-rating">
                                 <div class="rating-stars">
-                                    @php
+                                    <?php
                                         $rating = $venue->rating ?? 0;
                                         $fullStars = floor($rating);
                                         $halfStar = ($rating - $fullStars) >= 0.5;
                                         $emptyStars = 5 - $fullStars - ($halfStar ? 1 : 0);
-                                    @endphp
+                                    ?>
                                     
-                                    @for($i = 0; $i < $fullStars; $i++)
+                                    <?php for($i = 0; $i < $fullStars; $i++): ?>
                                         <i class="fa-solid fa-star"></i>
-                                    @endfor
+                                    <?php endfor; ?>
                                     
-                                    @if($halfStar)
+                                    <?php if($halfStar): ?>
                                         <i class="fa-solid fa-star-half-alt"></i>
-                                    @endif
+                                    <?php endif; ?>
                                     
-                                    @for($i = 0; $i < $emptyStars; $i++)
+                                    <?php for($i = 0; $i < $emptyStars; $i++): ?>
                                         <i class="fa-regular fa-star"></i>
-                                    @endfor
+                                    <?php endfor; ?>
                                 </div>
-                                <span class="rating-text">{{ number_format($venue->rating, 1) }}/5.0</span>
+                                <span class="rating-text"><?php echo e(number_format($venue->rating, 1)); ?>/5.0</span>
                             </div>
                             
                             <div class="venue-price">
-                                <span class="price-text">Rp {{ number_format($venue->price_per_hour, 0, ',', '.') }}/jam</span>
+                                <span class="price-text">Rp <?php echo e(number_format($venue->price_per_hour, 0, ',', '.')); ?>/jam</span>
                             </div>
                         </div>
 
                         <div class="venue-action">
-                            @if($venue->status == 'Aktif')
-                                <a href="{{ route('pesan.pesan-sekarang', ['id' => $venue->id]) }}" class="action-btn btn-booking">
+                            <?php if($venue->status == 'Aktif'): ?>
+                                <a href="<?php echo e(route('pesan.pesan-sekarang', ['id' => $venue->id])); ?>" class="action-btn btn-booking">
                                     <i class="fa-regular fa-calendar"></i>
                                     Pesan Sekarang
                                 </a>
-                            @else
+                            <?php else: ?>
                                 <button class="action-btn btn-booking" disabled style="background: #9ca3af; border-color: #9ca3af; cursor: not-allowed;">
                                     <i class="fa-solid fa-clock"></i>
-                                    {{ $venue->status == 'Maintenance' ? 'Maintenance' : 'Tidak Aktif' }}
+                                    <?php echo e($venue->status == 'Maintenance' ? 'Maintenance' : 'Tidak Aktif'); ?>
+
                                 </button>
-                            @endif
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
-                @endforeach
-            @else
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            <?php else: ?>
                 <div class="no-data">
                     <i class="fa-solid fa-map-marker-alt"></i>
                     <h3>Belum ada venue tersedia</h3>
                     <p>Silakan coba lagi nanti atau hubungi administrator.</p>
                 </div>
-            @endif
+            <?php endif; ?>
         </div>
 
         <!-- Footer Note -->
@@ -871,4 +873,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.user', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\CariArena\resources\views/user/pesan/index.blade.php ENDPATH**/ ?>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $venue->name }}</title>
+    <title><?php echo e($venue->name); ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* ==== VARIABLES ==== */
@@ -922,13 +922,13 @@
 <div class="venue-detail-card">
     <!-- Venue Image -->
     <div class="venue-image-section">
-        <img src="{{ $venue->photo ?? $venue->getDefaultPhotoUrl() }}" 
-             alt="{{ $venue->name }}">
+        <img src="<?php echo e($venue->photo ?? $venue->getDefaultPhotoUrl()); ?>" 
+             alt="<?php echo e($venue->name); ?>">
         <div class="venue-overlay">
-            <span class="badge badge-category">{{ strtoupper($venue->category ?? 'SPORT') }}</span>
+            <span class="badge badge-category"><?php echo e(strtoupper($venue->category ?? 'SPORT')); ?></span>
             <span class="badge badge-rating">
                 <i class="fas fa-star"></i>
-                {{ number_format($venue->rating ?? 4.5, 1) }}/5
+                <?php echo e(number_format($venue->rating ?? 4.5, 1)); ?>/5
             </span>
         </div>
     </div>
@@ -937,10 +937,10 @@
     <div class="venue-content">
         <!-- Header dengan nama dan harga -->
         <div class="venue-header">
-            <h2 class="venue-name">{{ $venue->name }}</h2>
+            <h2 class="venue-name"><?php echo e($venue->name); ?></h2>
             <div class="venue-price">
                 <div class="price-label">Harga per jam</div>
-                <div class="price-tag">Rp {{ number_format($venue->price_per_hour, 0, ',', '.') }}</div>
+                <div class="price-tag">Rp <?php echo e(number_format($venue->price_per_hour, 0, ',', '.')); ?></div>
             </div>
         </div>
 
@@ -948,19 +948,19 @@
         <div class="venue-info">
             <div class="info-item">
                 <i class="fas fa-map-marker-alt"></i>
-                <span>{{ $venue->address }}</span>
+                <span><?php echo e($venue->address); ?></span>
             </div>
             <div class="info-item">
                 <i class="fas fa-clock"></i>
-                <span>Buka: {{ $venue->opening_hours ?? '06.00–23.00' }}</span>
+                <span>Buka: <?php echo e($venue->opening_hours ?? '06.00–23.00'); ?></span>
             </div>
             <div class="info-item">
                 <i class="fas fa-basketball"></i>
-                <span>Kategori: {{ $venue->category }}</span>
+                <span>Kategori: <?php echo e($venue->category); ?></span>
             </div>
             <div class="info-item">
                 <i class="fas fa-star"></i>
-                <span>Rating: {{ number_format($venue->rating ?? 4.5, 1) }}/5.0</span>
+                <span>Rating: <?php echo e(number_format($venue->rating ?? 4.5, 1)); ?>/5.0</span>
             </div>
         </div>
 
@@ -973,35 +973,35 @@
             <div class="booking-details-grid">
                 <div class="booking-detail-item">
                     <div class="booking-detail-label">Kode Booking</div>
-                    <div class="booking-detail-value"><strong>{{ $booking->booking_code }}</strong></div>
+                    <div class="booking-detail-value"><strong><?php echo e($booking->booking_code); ?></strong></div>
                 </div>
                 <div class="booking-detail-item">
                     <div class="booking-detail-label">Tanggal</div>
-                    <div class="booking-detail-value">{{ \Carbon\Carbon::parse($booking->tanggal_booking)->isoFormat('dddd, D MMMM YYYY') }}</div>
+                    <div class="booking-detail-value"><?php echo e(\Carbon\Carbon::parse($booking->tanggal_booking)->isoFormat('dddd, D MMMM YYYY')); ?></div>
                 </div>
                 <div class="booking-detail-item">
                     <div class="booking-detail-label">Waktu</div>
-                    <div class="booking-detail-value">{{ \Carbon\Carbon::parse($booking->waktu_booking)->format('H:i') }}</div>
+                    <div class="booking-detail-value"><?php echo e(\Carbon\Carbon::parse($booking->waktu_booking)->format('H:i')); ?></div>
                 </div>
                 <div class="booking-detail-item">
                     <div class="booking-detail-label">Durasi</div>
-                    <div class="booking-detail-value">{{ $booking->durasi }} Jam</div>
+                    <div class="booking-detail-value"><?php echo e($booking->durasi); ?> Jam</div>
                 </div>
             </div>
             
             <!-- Timer Countdown -->
-            @if($remainingMinutes > 0)
+            <?php if($remainingMinutes > 0): ?>
             <div class="payment-timer">
                 <i class="fas fa-clock"></i>
-                <span>Selesaikan pembayaran dalam: <strong id="countdown-timer">{{ $remainingMinutes }} menit</strong></span>
+                <span>Selesaikan pembayaran dalam: <strong id="countdown-timer"><?php echo e($remainingMinutes); ?> menit</strong></span>
             </div>
-            @endif
+            <?php endif; ?>
         </div>
 
         <!-- Payment Methods -->
-        <form id="payment-form" action="{{ route('pesan.proses-bayar') }}" method="POST">
-            @csrf
-            <input type="hidden" name="booking_code" value="{{ $booking->booking_code }}">
+        <form id="payment-form" action="<?php echo e(route('pesan.proses-bayar')); ?>" method="POST">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="booking_code" value="<?php echo e($booking->booking_code); ?>">
             <input type="hidden" name="payment_method" id="payment_method" value="">
             <input type="hidden" name="bank_code" id="bank_code" value="">
             
@@ -1088,7 +1088,7 @@
                                 <!-- Nomor VA akan ditampilkan di sini -->
                             </div>
                             <div class="va-instruction">
-                                <p><i class="fas fa-info-circle"></i> Bayar sebelum: <strong>{{ \Carbon\Carbon::now()->addHours(1)->format('H:i') }}</strong></p>
+                                <p><i class="fas fa-info-circle"></i> Bayar sebelum: <strong><?php echo e(\Carbon\Carbon::now()->addHours(1)->format('H:i')); ?></strong></p>
                                 <p><i class="fas fa-clock"></i> Berlaku selama 1 jam</p>
                             </div>
                         </div>
@@ -1110,7 +1110,7 @@
                     <div id="qris-display" class="qris-options" style="display: none;">
                         <div class="qris-container">
                             <div class="qris-code">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ urlencode('BOOKING-' . $booking->booking_code . '-' . $booking->total_biaya) }}" 
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=<?php echo e(urlencode('BOOKING-' . $booking->booking_code . '-' . $booking->total_biaya)); ?>" 
                                      alt="QRIS Code" id="qris-image">
                                 <div class="qris-refresh">
                                     <button type="button" onclick="refreshQRIS()" class="refresh-btn">
@@ -1147,16 +1147,16 @@
                 </h3>
                 <div class="summary-container">
                     <div class="summary-row">
-                        <div class="summary-label">Sewa lapangan ({{ $booking->durasi }} jam)</div>
-                        <div class="summary-value">Rp {{ number_format($total, 0, ',', '.') }}</div>
+                        <div class="summary-label">Sewa lapangan (<?php echo e($booking->durasi); ?> jam)</div>
+                        <div class="summary-value">Rp <?php echo e(number_format($total, 0, ',', '.')); ?></div>
                     </div>
                     <div class="summary-row">
                         <div class="summary-label">Biaya admin</div>
-                        <div class="summary-value">Rp {{ number_format($adminFee, 0, ',', '.') }}</div>
+                        <div class="summary-value">Rp <?php echo e(number_format($adminFee, 0, ',', '.')); ?></div>
                     </div>
                     <div class="summary-row total-row">
                         <div class="total-label">Total Pembayaran</div>
-                        <div class="total-value">Rp {{ number_format($totalPayment, 0, ',', '.') }}</div>
+                        <div class="total-value">Rp <?php echo e(number_format($totalPayment, 0, ',', '.')); ?></div>
                     </div>
                 </div>
             </div>
@@ -1173,7 +1173,7 @@
                     </div>
                 </div>
                 <div class="booking-actions">
-                    <a href="{{ route('pesan.riwayat-booking') }}" class="action-btn btn-back">
+                    <a href="<?php echo e(route('pesan.riwayat-booking')); ?>" class="action-btn btn-back">
                         <i class="fas fa-arrow-left"></i>
                         Kembali
                     </a>
@@ -1269,7 +1269,7 @@
         const vaNumber = document.getElementById('va-number');
         
         // Generate nomor VA berdasarkan booking code
-        const bookingCode = "{{ $booking->booking_code }}";
+        const bookingCode = "<?php echo e($booking->booking_code); ?>";
         const vaPrefix = getVAPrefix(bankCode);
         const vaNumberStr = generateVANumber(vaPrefix, bookingCode);
         
@@ -1299,8 +1299,8 @@
 
     // Fungsi untuk generate QRIS
     function generateQRIS() {
-        const bookingCode = "{{ $booking->booking_code }}";
-        const totalAmount = {{ $totalPayment }};
+        const bookingCode = "<?php echo e($booking->booking_code); ?>";
+        const totalAmount = <?php echo e($totalPayment); ?>;
         const timestamp = Date.now();
         
         // Update QRIS image dengan timestamp untuk menghindari cache
@@ -1474,8 +1474,8 @@
     });
 
     // Timer countdown untuk pembayaran
-    @if($remainingMinutes > 0)
-    let paymentExpiresAt = new Date("{{ $expiresAt }}").getTime();
+    <?php if($remainingMinutes > 0): ?>
+    let paymentExpiresAt = new Date("<?php echo e($expiresAt); ?>").getTime();
     
     let paymentCountdown = setInterval(function() {
         let now = new Date().getTime();
@@ -1492,11 +1492,11 @@
             document.getElementById("countdown-timer").innerHTML = "EXPIRED";
             showNotification('Waktu pembayaran telah habis', 'error');
             setTimeout(() => {
-                window.location.href = "{{ route('pesan.riwayat-booking') }}";
+                window.location.href = "<?php echo e(route('pesan.riwayat-booking')); ?>";
             }, 2000);
         }
     }, 1000);
-    @endif
+    <?php endif; ?>
 
     // Inisialisasi saat halaman dimuat
     document.addEventListener('DOMContentLoaded', function() {
@@ -1506,4 +1506,4 @@
     });
 </script>
 </body>
-</html>
+</html><?php /**PATH D:\CariArena\resources\views/user/pesan/bayar.blade.php ENDPATH**/ ?>

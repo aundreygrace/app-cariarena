@@ -178,7 +178,7 @@ Route::get('/user/login', function () {
         Route::get('/booking/{id}', [PesanController::class, 'booking'])->name('booking');
         
         //Route untuk pembayaran dan riwayat
-        Route::get('/bayar', [PesanController::class, 'bayar'])->name('bayar');
+        Route::get('/bayar/{booking_code}', [PesanController::class, 'bayar'])->name('bayar');
         Route::get('/pembayaran/{id}', [PesanController::class, 'pembayaran'])->name('pembayaran');
         Route::post('/proses-bayar', [PesanController::class, 'prosesBayar'])->name('proses-bayar');
         
@@ -186,7 +186,7 @@ Route::get('/user/login', function () {
         Route::get('/riwayat-booking', [PesanController::class, 'riwayatBooking'])->name('riwayat-booking');
 
         Route::get('/ulasan/{id}', [PesanController::class, 'ulasan'])->name('ulasan');
-        Route::post('/process-booking', [PesanController::class, 'processBooking'])->name('process-booking');
+        Route::post('/process-booking', [PesanController::class, 'storeBooking'])->name('process-booking');
         
         // API routes untuk booking system
         Route::get('/available-slots', [PesanController::class, 'getAvailableSlots'])->name('available-slots');
@@ -194,13 +194,16 @@ Route::get('/user/login', function () {
         Route::get('/month-bookings', [PesanController::class, 'getMonthBookings'])->name('month-bookings');
     });
 
-    // RIWAYAT
+    // Riwayat Booking Routes
     Route::prefix('riwayat')->name('riwayat.')->group(function () {
+        // View riwayat page
         Route::get('/', [RiwayatController::class, 'index'])->name('index');
-        Route::get('/detail/{id}', [RiwayatController::class, 'detail'])->name('detail');
-        Route::post('/submit-review', [RiwayatController::class, 'submitReview'])->name('submit-review');
-        Route::post('/cancel-booking', [RiwayatController::class, 'cancelBooking'])->name('cancel-booking');
-        Route::get('/booking/{id}', [RiwayatController::class, 'bookingDetail'])->name('booking.detail');
+        
+        // Cancel booking (AJAX)
+        Route::post('/cancel/{id}', [RiwayatController::class, 'cancelBooking'])->name('cancel');
+        
+        // Submit review (AJAX)
+        Route::post('/review/{id}', [RiwayatController::class, 'submitReview'])->name('review');
     });
 
     Route::get('/riwayat', [RiwayatController::class, 'index'])->name('riwayat');
@@ -457,3 +460,109 @@ Route::get('/clear-cache', function() {
     Artisan::call('view:clear');
     return "Cache cleared successfully!";
 })->name('clear.cache');
+
+Route::get('/debug-jadwal/{venueId}/{date}', function($venueId, $date) {
+    
+    echo "<h1>DEBUG JADWAL</h1>";
+    echo "<p>Venue ID: {$venueId}</p>";
+    echo "<p>Date: {$date}</p>";
+    echo "<hr>";
+    
+    // Test 1: Raw SQL
+    echo "<h2>Test 1: Raw SQL Query</h2>";
+    $rawResults = DB::select("
+        SELECT id, venue_id, tanggal, waktu_mulai, status, locked_until
+        FROM jadwal
+        WHERE venue_id = ? AND tanggal = ?
+    ", [$venueId, $date]);
+    
+    echo "<p>Raw SQL Results: " . count($rawResults) . " rows</p>";
+    echo "<pre>" . print_r($rawResults, true) . "</pre>";
+    echo "<hr>";
+    
+    // Test 2: Query Builder
+    echo "<h2>Test 2: Query Builder</h2>";
+    $qbResults = DB::table('jadwal')
+        ->where('venue_id', $venueId)
+        ->where('tanggal', $date)
+        ->get();
+    
+    echo "<p>Query Builder Results: " . $qbResults->count() . " rows</p>";
+    echo "<pre>" . print_r($qbResults->toArray(), true) . "</pre>";
+    echo "<hr>";
+    
+    // Test 3: Eloquent
+    echo "<h2>Test 3: Eloquent Model</h2>";
+    $eloquentResults = \App\Models\Jadwal::where('venue_id', $venueId)
+        ->where('tanggal', $date)
+        ->get();
+    
+    echo "<p>Eloquent Results: " . $eloquentResults->count() . " rows</p>";
+    echo "<pre>" . print_r($eloquentResults->toArray(), true) . "</pre>";
+    echo "<hr>";
+    
+    // Test 4: whereDate
+    echo "<h2>Test 4: whereDate</h2>";
+    $whereDateResults = \App\Models\Jadwal::where('venue_id', $venueId)
+        ->whereDate('tanggal', $date)
+        ->get();
+    
+    echo "<p>whereDate Results: " . $whereDateResults->count() . " rows</p>";
+    echo "<pre>" . print_r($whereDateResults->toArray(), true) . "</pre>";
+    echo "<hr>";
+    
+    // Test 5: Check tanggal format
+    echo "<h2>Test 5: Tanggal Format Check</h2>";
+    $allJadwal = DB::table('jadwal')
+        ->where('venue_id', $venueId)
+        ->select('id', 'tanggal', 'waktu_mulai', 'status')
+        ->get();
+    
+    echo "<p>All jadwal for venue {$venueId}: " . $allJadwal->count() . " rows</p>";
+    foreach ($allJadwal as $j) {
+        $match = $j->tanggal === $date ? '✅ MATCH' : '❌ NO MATCH';
+        echo "<p>ID {$j->id}: tanggal='{$j->tanggal}' vs '{$date}' → {$match}</p>";
+    }
+    echo "<hr>";
+    
+    // Test 6: Simulated Controller Query
+    echo "<h2>Test 6: Simulated Controller Query</h2>";
+    $controllerQuery = DB::table('jadwal')
+        ->where('venue_id', $venueId)
+        ->where('tanggal', $date)
+        ->where('status', 'Available')
+        ->where(function($query) {
+            $query->whereNull('locked_until')
+                  ->orWhere('locked_until', '<', now());
+        })
+        ->orderBy('waktu_mulai')
+        ->get();
+    
+    echo "<p>Controller Simulated Results: " . $controllerQuery->count() . " rows</p>";
+    echo "<pre>" . print_r($controllerQuery->toArray(), true) . "</pre>";
+    echo "<hr>";
+    
+    // Test 7: Check data types
+    echo "<h2>Test 7: Data Type Check</h2>";
+    $firstJadwal = DB::table('jadwal')
+        ->where('venue_id', $venueId)
+        ->first();
+    
+    if ($firstJadwal) {
+        echo "<p>First jadwal:</p>";
+        echo "<pre>";
+        echo "ID: " . var_export($firstJadwal->id, true) . "\n";
+        echo "Venue ID: " . var_export($firstJadwal->venue_id, true) . " (type: " . gettype($firstJadwal->venue_id) . ")\n";
+        echo "Tanggal: " . var_export($firstJadwal->tanggal, true) . " (type: " . gettype($firstJadwal->tanggal) . ")\n";
+        echo "Status: " . var_export($firstJadwal->status, true) . "\n";
+        echo "Locked Until: " . var_export($firstJadwal->locked_until, true) . "\n";
+        echo "</pre>";
+    }
+    
+    echo "<hr>";
+    echo "<h2>Summary</h2>";
+    echo "<p>Request Date: {$date} (type: " . gettype($date) . ")</p>";
+    echo "<p>Database Date: " . ($firstJadwal ? $firstJadwal->tanggal : 'N/A') . "</p>";
+    echo "<p>Match: " . ($firstJadwal && $firstJadwal->tanggal === $date ? 'YES' : 'NO') . "</p>";
+    
+})->middleware('auth');
