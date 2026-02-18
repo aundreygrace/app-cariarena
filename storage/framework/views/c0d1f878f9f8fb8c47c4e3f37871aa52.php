@@ -1682,30 +1682,18 @@ input:checked + .toggle-slider:before {
                         <!-- Avatar dan Info Dasar -->
                         <div class="profile-header">
                             <div class="photo-preview" id="photoPreview">
-                                <?php
-                                    $user = auth()->user();
-                                    $photoUrl = null;
-                                    $hasPhoto = false;
-                                    
-                                    if ($user->profile_photo) {
-                                        $publicPath = public_path('storage/profile-photos/' . $user->profile_photo);
-                                        $storagePath = storage_path('app/public/profile-photos/' . $user->profile_photo);
-                                        
-                                        if (file_exists($publicPath)) {
-                                            $photoUrl = asset('storage/profile-photos/' . $user->profile_photo);
-                                            $hasPhoto = true;
-                                        } 
-                                        elseif (file_exists($storagePath)) {
-                                            $photoUrl = asset('storage/profile-photos/' . $user->profile_photo);
-                                            $hasPhoto = true;
-                                        }
-                                    }
-                                    
-                                    if(session('profile_photo_updated') && $hasPhoto) {
-                                        $photoUrl .= '?t=' . time();
-                                        session()->forget('profile_photo_updated');
-                                    }
-                                ?>
+                            <?php
+                                $user = auth()->user();
+                                //Using Model Accessor - Auto detect role!
+                                $photoUrl = $user->profile_photo_url;
+                                $hasPhoto = !is_null($photoUrl);
+                                
+                                // Add timestamp for cache busting
+                                if(session('profile_photo_updated') && $hasPhoto) {
+                                    $photoUrl .= '?t=' . time();
+                                    session()->forget('profile_photo_updated');
+                                }
+                            ?>
                                 
                                 <?php if($hasPhoto && $photoUrl): ?>
                                     <img src="<?php echo e($photoUrl); ?>" 

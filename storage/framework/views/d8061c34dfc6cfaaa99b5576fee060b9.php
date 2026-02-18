@@ -242,7 +242,7 @@
 
         .booking-details-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* TIGA KOLOM DALAM SATU BARIS */
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
             margin-top: 15px;
         }
@@ -283,57 +283,346 @@
             margin-bottom: 30px;
         }
 
-        /* PERUBAHAN UTAMA: METODE PEMBAYARAN 1 BARIS */
-        .methods-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr); /* TIGA KOLOM DALAM SATU BARIS */
-            gap: 20px;
-            margin-top: 15px;
+        /* Payment option section */
+        .payment-option-section {
+            margin-bottom: 20px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
         }
 
         .method-card {
+            display: flex;
+            align-items: center;
+            padding: 15px;
             background: #f8fafc;
             border: 2px solid #e2e8f0;
             border-radius: 10px;
-            padding: 25px 20px;
-            text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
+            position: relative;
         }
 
         .method-card:hover {
             border-color: var(--primary-color);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background: rgba(98, 147, 196, 0.05);
         }
 
         .method-card.selected {
             border-color: var(--primary-color);
-            background: rgba(98, 147, 196, 0.05);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(98, 147, 196, 0.15);
+            background: rgba(98, 147, 196, 0.1);
         }
 
         .method-icon {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-            border-radius: 50%;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 24px;
+            font-size: 22px;
+            margin-right: 15px;
         }
 
         .method-name {
             font-size: 16px;
             font-weight: 600;
             color: var(--text-dark);
+            flex: 1;
+        }
+
+        .method-arrow {
+            color: var(--text-light);
+            font-size: 14px;
+            transition: transform 0.3s ease;
+        }
+
+        .method-card.active .method-arrow {
+            transform: rotate(180deg);
+        }
+
+        /* Bank selection styles */
+        .bank-options {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .bank-selection-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 15px;
+        }
+
+        .banks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .bank-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .bank-option:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .bank-option.selected {
+            border-color: var(--primary-color);
+            background: rgba(98, 147, 196, 0.1);
+        }
+
+        .bank-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            margin-right: 15px;
+        }
+
+        .bank-info {
+            flex: 1;
+        }
+
+        .bank-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .bank-account {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .bank-check {
+            color: var(--primary-color);
+            font-size: 18px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .bank-option.selected .bank-check {
+            opacity: 1;
+        }
+
+        /* Virtual Account Info */
+        .virtual-account-info {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #cbd5e0;
+        }
+
+        .va-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .va-header i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
+        .va-number {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-dark);
+            text-align: center;
+            letter-spacing: 2px;
+            border: 2px dashed #cbd5e0;
+            margin-bottom: 15px;
+        }
+
+        .va-instruction {
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .va-instruction p {
+            margin: 5px 0;
+            color: #2d3748;
+            font-size: 14px;
+        }
+
+        .va-instruction i {
+            color: #4CAF50;
+            margin-right: 8px;
+        }
+
+        /* QRIS Styles */
+        .qris-options {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .qris-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            .qris-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .qris-code {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .qris-code img {
+            max-width: 200px;
+            width: 100%;
+            height: auto;
+            margin-bottom: 15px;
+        }
+
+        .qris-refresh {
+            margin-top: 15px;
+        }
+
+        .refresh-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .qris-instruction {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .qris-instruction h4 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qris-instruction ol {
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        .qris-instruction li {
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+
+        .payment-expiry {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #856404;
+        }
+
+        .payment-expiry i {
+            color: #ffc107;
+        }
+
+        /* Payment Selected Info */
+        .payment-selected {
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .payment-selected.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .payment-selected-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .payment-method-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .payment-method-info i {
+            color: #6293c4ff;
+            font-size: 18px;
+        }
+
+        .payment-change {
+            color: var(--primary-color);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .payment-change:hover {
+            text-decoration: underline;
         }
 
         /* ==== PAYMENT SUMMARY SECTION ==== */
@@ -518,7 +807,44 @@
             animation: slideInLeft 0.5s ease-out;
         }
 
-        /* ==== RESPONSIVE DESIGN (MINIMAL) ==== */
+        .payment-timer {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #856404;
+        }
+        
+        .payment-timer i {
+            color: #ffc107;
+        }
+        
+        .spinner-border {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            vertical-align: text-bottom;
+            border: 0.15em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border 0.75s linear infinite;
+        }
+        
+        .spinner-border-sm {
+            width: 0.875rem;
+            height: 0.875rem;
+            border-width: 0.1em;
+        }
+        
+        @keyframes spinner-border {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ==== RESPONSIVE DESIGN ==== */
         @media (max-width: 992px) {
             .booking-container {
                 padding: 20px;
@@ -547,17 +873,13 @@
                 font-size: 14px;
             }
             
-            .methods-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-            
             .booking-details-grid {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
         @media (max-width: 768px) {
-            .methods-grid {
+            .banks-grid {
                 grid-template-columns: 1fr;
             }
             
@@ -586,10 +908,6 @@
                 padding: 20px;
             }
             
-            .method-card {
-                padding: 20px 15px;
-            }
-            
             .action-btn {
                 padding: 12px 20px;
                 font-size: 13px;
@@ -598,226 +916,594 @@
     </style>
 </head>
 <body>
-    <div class="desktop-container">
+<div class="desktop-container">
 
-        <!-- Payment Detail Card -->
-        <div class="venue-detail-card">
-            <!-- Venue Image -->
-            <div class="venue-image-section">
-                <img src="<?php echo e($venue->photo ?? $venue->getDefaultPhotoUrl()); ?>" 
-                     alt="<?php echo e($venue->name); ?>">
-                <div class="venue-overlay">
-                    <span class="badge badge-category"><?php echo e(strtoupper($venue->category ?? 'SPORT')); ?></span>
-                    <span class="badge badge-rating">
-                        <i class="fas fa-star"></i>
-                        <?php echo e(number_format($venue->averageRating ?? 4.5, 1)); ?>/5
-                    </span>
-                </div>
-            </div>
-            
-            <!-- Venue Content -->
-            <div class="venue-content">
-                <!-- Header dengan nama dan harga -->
-                <div class="venue-header">
-                    <h2 class="venue-name"><?php echo e($venue->name ?? 'Arena Futsal Corner'); ?></h2>
-                    <div class="venue-price">
-                        <div class="price-label">Harga per jam</div>
-                        <div class="price-tag">Rp <?php echo e(number_format($venue->price_per_hour ?? 120000, 0, ',', '.')); ?></div>
-                    </div>
-                </div>
-
-                <!-- Informasi venue -->
-                <div class="venue-info">
-                    <div class="info-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span><?php echo e($venue->address ?? 'Bintaro, Jakarta Selatan'); ?></span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fas fa-clock"></i>
-                        <span>Buka: 06.00–23.00</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fas fa-basketball"></i>
-                        <span>Kategori: <?php echo e($venue->category ?? 'Futsal'); ?></span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fas fa-star"></i>
-                        <span>Rating: <?php echo e(number_format($venue->averageRating ?? 4.5, 1)); ?>/5.0</span>
-                    </div>
-                </div>
-
-                <!-- Booking Details -->
-                <div class="booking-details-section">
-                    <h3 class="section-title">
-                        <i class="far fa-calendar-alt"></i>
-                        Detail Booking
-                    </h3>
-                    <!-- PERUBAHAN: DETAIL BOOKING 1 BARIS -->
-                    <div class="booking-details-grid">
-                        <div class="booking-detail-item">
-                            <div class="booking-detail-label">Tanggal</div>
-                            <div class="booking-detail-value" id="booking-date"><?php echo e($date ?? 'Minggu, 2 Nov 2023'); ?></div>
-                        </div>
-                        <div class="booking-detail-item">
-                            <div class="booking-detail-label">Waktu</div>
-                            <div class="booking-detail-value" id="booking-time"><?php echo e($time ?? '07.00'); ?></div>
-                        </div>
-                        <div class="booking-detail-item">
-                            <div class="booking-detail-label">Durasi</div>
-                            <div class="booking-detail-value" id="booking-duration"><?php echo e($duration ?? '2 Jam'); ?></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payment Methods -->
-                <div class="payment-methods-section">
-                    <h3 class="section-title">
-                        <i class="far fa-credit-card"></i>
-                        Metode Pembayaran
-                    </h3>
-                    <!-- PERUBAHAN UTAMA: METODE PEMBAYARAN 1 BARIS -->
-                    <div class="methods-grid">
-                        <div class="method-card" onclick="selectPayment(this, 'credit_card')">
-                            <div class="method-icon">
-                                <i class="far fa-credit-card"></i>
-                            </div>
-                            <div class="method-name">Kartu Kredit/Debit</div>
-                        </div>
-                        <div class="method-card" onclick="selectPayment(this, 'e_wallet')">
-                            <div class="method-icon">
-                                <i class="fas fa-wallet"></i>
-                            </div>
-                            <div class="method-name">E-Wallet</div>
-                        </div>
-                        <div class="method-card" onclick="selectPayment(this, 'bank_transfer')">
-                            <div class="method-icon">
-                                <i class="fas fa-university"></i>
-                            </div>
-                            <div class="method-name">Transfer Bank</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payment Summary -->
-                <div class="payment-summary-section">
-                    <h3 class="section-title">
-                        <i class="fas fa-receipt"></i>
-                        Rincian Biaya
-                    </h3>
-                    <div class="summary-container">
-                        <div class="summary-row">
-                            <div class="summary-label">Sewa lapangan (<?php echo e($duration ? str_replace(' Jam', '', $duration) : '2'); ?> jam)</div>
-                            <div class="summary-value" id="venue-cost">Rp <?php echo e(number_format($total ?? 240000, 0, ',', '.')); ?></div>
-                        </div>
-                        <div class="summary-row">
-                            <div class="summary-label">Biaya admin</div>
-                            <div class="summary-value" id="admin-fee">Rp <?php echo e(number_format($adminFee ?? 5000, 0, ',', '.')); ?></div>
-                        </div>
-                        <div class="summary-row total-row">
-                            <div class="total-label">Total Pembayaran</div>
-                            <div class="total-value" id="total-payment">Rp <?php echo e(number_format($totalPayment ?? 245000, 0, ',', '.')); ?></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payment Actions -->
-                <div class="payment-actions-section">
-                    <div class="booking-info">
-                        <div class="security-note">
-                            <i class="fas fa-lock"></i>
-                            <span>Pembayaran Anda aman dan terenkripsi</span>
-                        </div>
-                    </div>
-                    <div class="booking-actions">
-                        <button class="action-btn btn-back" onclick="goBack()">
-                            <i class="fas fa-arrow-left"></i>
-                            Kembali
-                        </button>
-                        <button class="action-btn btn-pay" id="pay-button" onclick="processPayment()">
-                            <i class="fas fa-lock"></i>
-                            Bayar Sekarang
-                        </button>
-                    </div>
-                </div>
-            </div>
+<!-- Payment Detail Card -->
+<div class="venue-detail-card">
+    <!-- Venue Image -->
+    <div class="venue-image-section">
+        <img src="<?php echo e($venue->photo ?? $venue->getDefaultPhotoUrl()); ?>" 
+             alt="<?php echo e($venue->name); ?>">
+        <div class="venue-overlay">
+            <span class="badge badge-category"><?php echo e(strtoupper($venue->category ?? 'SPORT')); ?></span>
+            <span class="badge badge-rating">
+                <i class="fas fa-star"></i>
+                <?php echo e(number_format($venue->rating ?? 4.5, 1)); ?>/5
+            </span>
         </div>
     </div>
+    
+    <!-- Venue Content -->
+    <div class="venue-content">
+        <!-- Header dengan nama dan harga -->
+        <div class="venue-header">
+            <h2 class="venue-name"><?php echo e($venue->name); ?></h2>
+            <div class="venue-price">
+                <div class="price-label">Harga per jam</div>
+                <div class="price-tag">Rp <?php echo e(number_format($venue->price_per_hour, 0, ',', '.')); ?></div>
+            </div>
+        </div>
 
-    <script>
-        // Variabel global untuk menyimpan metode pembayaran yang dipilih
-        let selectedPaymentMethod = 'credit_card';
+        <!-- Informasi venue -->
+        <div class="venue-info">
+            <div class="info-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span><?php echo e($venue->address); ?></span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-clock"></i>
+                <span>Buka: <?php echo e($venue->opening_hours ?? '06.00–23.00'); ?></span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-basketball"></i>
+                <span>Kategori: <?php echo e($venue->category); ?></span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-star"></i>
+                <span>Rating: <?php echo e(number_format($venue->rating ?? 4.5, 1)); ?>/5.0</span>
+            </div>
+        </div>
+
+        <!-- Booking Details -->
+        <div class="booking-details-section">
+            <h3 class="section-title">
+                <i class="far fa-calendar-alt"></i>
+                Detail Booking
+            </h3>
+            <div class="booking-details-grid">
+                <div class="booking-detail-item">
+                    <div class="booking-detail-label">Kode Booking</div>
+                    <div class="booking-detail-value"><strong><?php echo e($booking->booking_code); ?></strong></div>
+                </div>
+                <div class="booking-detail-item">
+                    <div class="booking-detail-label">Tanggal</div>
+                    <div class="booking-detail-value"><?php echo e(\Carbon\Carbon::parse($booking->tanggal_booking)->isoFormat('dddd, D MMMM YYYY')); ?></div>
+                </div>
+                <div class="booking-detail-item">
+                    <div class="booking-detail-label">Waktu</div>
+                    <div class="booking-detail-value"><?php echo e(\Carbon\Carbon::parse($booking->waktu_booking)->format('H:i')); ?></div>
+                </div>
+                <div class="booking-detail-item">
+                    <div class="booking-detail-label">Durasi</div>
+                    <div class="booking-detail-value"><?php echo e($booking->durasi); ?> Jam</div>
+                </div>
+            </div>
+            
+            <!-- Timer Countdown -->
+            <?php if($remainingMinutes > 0): ?>
+            <div class="payment-timer">
+                <i class="fas fa-clock"></i>
+                <span>Selesaikan pembayaran dalam: <strong id="countdown-timer"><?php echo e($remainingMinutes); ?> menit</strong></span>
+            </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Payment Methods -->
+        <form id="payment-form" action="<?php echo e(route('pesan.proses-bayar')); ?>" method="POST">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="booking_code" value="<?php echo e($booking->booking_code); ?>">
+            <input type="hidden" name="payment_method" id="payment_method" value="">
+            <input type="hidden" name="bank_code" id="bank_code" value="">
+            
+            <div class="payment-methods-section">
+                <h3 class="section-title">
+                    <i class="far fa-credit-card"></i>
+                    Metode Pembayaran
+                </h3>
+                
+                <!-- Opsi Transfer Bank -->
+                <div class="payment-option-section">
+                    <div class="method-card" onclick="togglePaymentOption('transfer')">
+                        <div class="method-icon">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <div class="method-name">Transfer Bank</div>
+                        <div class="method-arrow">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    
+                    <div id="bank-selection" class="bank-options" style="display: none;">
+                        <h4 class="bank-selection-title">Pilih Bank</h4>
+                        <div class="banks-grid">
+                            <div class="bank-option" onclick="selectBank('bca', this)">
+                                <div class="bank-logo">
+                                    <i class="fas fa-landmark"></i>
+                                </div>
+                                <div class="bank-info">
+                                    <div class="bank-name">BCA</div>
+                                    <div class="bank-account">Virtual Account</div>
+                                </div>
+                                <div class="bank-check">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="bank-option" onclick="selectBank('mandiri', this)">
+                                <div class="bank-logo">
+                                    <i class="fas fa-university"></i>
+                                </div>
+                                <div class="bank-info">
+                                    <div class="bank-name">Mandiri</div>
+                                    <div class="bank-account">Virtual Account</div>
+                                </div>
+                                <div class="bank-check">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="bank-option" onclick="selectBank('bri', this)">
+                                <div class="bank-logo">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <div class="bank-info">
+                                    <div class="bank-name">BRI</div>
+                                    <div class="bank-account">Virtual Account</div>
+                                </div>
+                                <div class="bank-check">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="bank-option" onclick="selectBank('bni', this)">
+                                <div class="bank-logo">
+                                    <i class="fas fa-columns"></i>
+                                </div>
+                                <div class="bank-info">
+                                    <div class="bank-name">BNI</div>
+                                    <div class="bank-account">Virtual Account</div>
+                                </div>
+                                <div class="bank-check">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="virtual-account-info" id="va-info" style="display: none;">
+                            <div class="va-header">
+                                <i class="fas fa-credit-card"></i>
+                                <span>Nomor Virtual Account</span>
+                            </div>
+                            <div class="va-number" id="va-number">
+                                <!-- Nomor VA akan ditampilkan di sini -->
+                            </div>
+                            <div class="va-instruction">
+                                <p><i class="fas fa-info-circle"></i> Bayar sebelum: <strong><?php echo e(\Carbon\Carbon::now()->addHours(1)->format('H:i')); ?></strong></p>
+                                <p><i class="fas fa-clock"></i> Berlaku selama 1 jam</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Opsi QRIS -->
+                <div class="payment-option-section">
+                    <div class="method-card" onclick="togglePaymentOption('qris')">
+                        <div class="method-icon">
+                            <i class="fas fa-qrcode"></i>
+                        </div>
+                        <div class="method-name">QRIS</div>
+                        <div class="method-arrow">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    
+                    <div id="qris-display" class="qris-options" style="display: none;">
+                        <div class="qris-container">
+                            <div class="qris-code">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=<?php echo e(urlencode('BOOKING-' . $booking->booking_code . '-' . $booking->total_biaya)); ?>" 
+                                     alt="QRIS Code" id="qris-image">
+                                <div class="qris-refresh">
+                                    <button type="button" onclick="refreshQRIS()" class="refresh-btn">
+                                        <i class="fas fa-sync-alt"></i> Refresh QR
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="qris-instruction">
+                                <h4><i class="fas fa-mobile-alt"></i> Cara Bayar:</h4>
+                                <ol>
+                                    <li>Buka aplikasi e-wallet atau mobile banking</li>
+                                    <li>Pilih fitur <strong>Scan QRIS</strong></li>
+                                    <li>Arahkan kamera ke kode QR di atas</li>
+                                    <li>Konfirmasi pembayaran</li>
+                                    <li>Pembayaran akan diverifikasi otomatis</li>
+                                </ol>
+                            </div>
+                        </div>
+                        
+                        <div class="payment-expiry">
+                            <i class="fas fa-clock"></i>
+                            <span>QRIS berlaku selama: <strong id="qris-timer">15:00</strong> menit</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Summary -->
+            <div class="payment-summary-section">
+                <h3 class="section-title">
+                    <i class="fas fa-receipt"></i>
+                    Rincian Biaya
+                </h3>
+                <div class="summary-container">
+                    <div class="summary-row">
+                        <div class="summary-label">Sewa lapangan (<?php echo e($booking->durasi); ?> jam)</div>
+                        <div class="summary-value">Rp <?php echo e(number_format($total, 0, ',', '.')); ?></div>
+                    </div>
+                    <div class="summary-row">
+                        <div class="summary-label">Biaya admin</div>
+                        <div class="summary-value">Rp <?php echo e(number_format($adminFee, 0, ',', '.')); ?></div>
+                    </div>
+                    <div class="summary-row total-row">
+                        <div class="total-label">Total Pembayaran</div>
+                        <div class="total-value">Rp <?php echo e(number_format($totalPayment, 0, ',', '.')); ?></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Actions -->
+            <div class="payment-actions-section">
+                <div class="booking-info">
+                    <div class="security-note">
+                        <i class="fas fa-lock"></i>
+                        <span>Pembayaran Anda aman dan terenkripsi</span>
+                    </div>
+                    <div class="payment-selected" id="payment-selected">
+                        <!-- Menampilkan metode yang dipilih -->
+                    </div>
+                </div>
+                <div class="booking-actions">
+                    <a href="<?php echo e(route('pesan.riwayat-booking')); ?>" class="action-btn btn-back">
+                        <i class="fas fa-arrow-left"></i>
+                        Kembali
+                    </a>
+                    <button type="submit" class="action-btn btn-pay" id="pay-button" disabled>
+                        <i class="fas fa-lock"></i>
+                        Lanjutkan Pembayaran
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+
+<script>
+    // Variabel global untuk pembayaran
+    let selectedPaymentMethod = '';
+    let selectedBank = '';
+    let qrisTimer = null;
+    let qrisTimeLeft = 900; // 15 menit dalam detik
+
+    // Fungsi untuk memilih opsi pembayaran
+    function togglePaymentOption(method) {
+        event.preventDefault();
         
-        // Fungsi untuk kembali ke halaman sebelumnya
-        function goBack() {
-            window.history.back();
-        }
+        // Reset semua
+        document.querySelectorAll('.method-card').forEach(el => {
+            el.classList.remove('active', 'selected');
+        });
         
-        // Fungsi untuk memilih metode pembayaran
-        function selectPayment(element, method) {
-            // Hapus class selected dari semua opsi pembayaran
-            document.querySelectorAll('.method-card').forEach(el => {
+        // Sembunyikan semua opsi
+        document.getElementById('bank-selection').style.display = 'none';
+        document.getElementById('qris-display').style.display = 'none';
+        
+        // Aktifkan metode yang dipilih
+        const activeCard = event.currentTarget.closest('.method-card');
+        activeCard.classList.add('active', 'selected');
+        
+        // Tampilkan opsi yang sesuai
+        if (method === 'transfer') {
+            document.getElementById('bank-selection').style.display = 'block';
+            document.getElementById('payment_method').value = 'transfer';
+            selectedPaymentMethod = 'transfer';
+            
+            // Reset bank selection
+            document.querySelectorAll('.bank-option').forEach(el => {
                 el.classList.remove('selected');
             });
+            document.getElementById('va-info').style.display = 'none';
             
-            // Tambah class selected ke opsi pembayaran yang diklik
-            element.classList.add('selected');
+        } else if (method === 'qris') {
+            document.getElementById('qris-display').style.display = 'block';
+            document.getElementById('payment_method').value = 'qris';
+            selectedPaymentMethod = 'qris';
             
-            // Simpan metode pembayaran yang dipilih
-            selectedPaymentMethod = method;
+            // Mulai timer QRIS
+            startQRISTimer();
+            
+            // Generate QRIS code
+            generateQRIS();
         }
         
-        // Fungsi untuk memproses pembayaran
-        function processPayment() {
-            const button = document.getElementById('pay-button');
-            const originalText = button.innerHTML;
-            
-            // Tampilkan loading
-            button.innerHTML = '<span class="loading"></span> Memproses...';
-            button.disabled = true;
-            
-            // Ambil data dari tampilan
-            const date = document.getElementById('booking-date').textContent;
-            const time = document.getElementById('booking-time').textContent;
-            const duration = document.getElementById('booking-duration').textContent;
-            
-            // Ekstrak total dari tampilan
-            const totalText = document.getElementById('total-payment').textContent;
-            const total = parseInt(totalText.replace(/[^0-9]/g, ''));
-            
-            const venueName = "<?php echo e($venue->name ?? 'Arena Futsal Corner'); ?>";
-            const address = "<?php echo e($venue->address ?? 'Bintaro, Jakarta Selatan'); ?>";
-            
-            // Generate booking code
-            const bookingCode = 'BK-' + Math.random().toString(36).substr(2, 8).toUpperCase();
-            
-            // Buat URL redirect ke riwayat booking DENGAN SEMUA PARAMETER
-            const redirectUrl = "<?php echo e(route('pesan.riwayat-booking')); ?>?" + new URLSearchParams({
-                status: 'success',
-                booking_code: bookingCode,
-                date: date,
-                time: time,
-                duration: duration,
-                total: total,
-                venue_name: venueName,
-                address: address,
-                payment_method: selectedPaymentMethod
-            }).toString();
-            
-            // Simulasi proses pembayaran (loading effect)
-            setTimeout(function() {
-                // Langsung redirect ke halaman riwayat booking dengan semua data
-                window.location.href = redirectUrl;
-            }, 1500);
-        }
+        // Reset tombol bayar
+        document.getElementById('pay-button').disabled = true;
+        updatePaymentSelected();
+    }
+
+    // Fungsi untuk memilih bank
+    function selectBank(bankCode, element) {
+        event.preventDefault();
         
-        // Inisialisasi saat halaman dimuat
-        document.addEventListener('DOMContentLoaded', function() {
-            // Pilih otomatis opsi pembayaran pertama
-            const firstPaymentOption = document.querySelector('.method-card');
-            if (firstPaymentOption) {
-                firstPaymentOption.classList.add('selected');
-            }
+        // Reset pilihan bank
+        document.querySelectorAll('.bank-option').forEach(el => {
+            el.classList.remove('selected');
         });
-    </script>
+        
+        // Aktifkan bank yang dipilih
+        element.classList.add('selected');
+        selectedBank = bankCode;
+        document.getElementById('bank_code').value = bankCode;
+        
+        // Tampilkan info Virtual Account
+        showVirtualAccount(bankCode);
+        
+        // Aktifkan tombol bayar
+        document.getElementById('pay-button').disabled = false;
+        updatePaymentSelected();
+    }
+
+    // Fungsi untuk menampilkan nomor Virtual Account
+    function showVirtualAccount(bankCode) {
+        const vaInfo = document.getElementById('va-info');
+        const vaNumber = document.getElementById('va-number');
+        
+        // Generate nomor VA berdasarkan booking code
+        const bookingCode = "<?php echo e($booking->booking_code); ?>";
+        const vaPrefix = getVAPrefix(bankCode);
+        const vaNumberStr = generateVANumber(vaPrefix, bookingCode);
+        
+        vaNumber.textContent = vaNumberStr;
+        vaInfo.style.display = 'block';
+    }
+
+    // Fungsi untuk mendapatkan prefix VA berdasarkan bank
+    function getVAPrefix(bankCode) {
+        const prefixes = {
+            'bca': '827',
+            'mandiri': '888',
+            'bri': '801',
+            'bni': '809'
+        };
+        return prefixes[bankCode] || '888';
+    }
+
+    // Fungsi untuk generate nomor VA
+    function generateVANumber(prefix, bookingCode) {
+        // Ambil 6 digit terakhir booking code
+        const bookingDigits = bookingCode.replace(/[^0-9]/g, '').slice(-6);
+        // Gabungkan dengan prefix dan tambahkan digit acak
+        const randomDigits = Math.floor(1000 + Math.random() * 9000);
+        return `${prefix}${bookingDigits}${randomDigits}`;
+    }
+
+    // Fungsi untuk generate QRIS
+    function generateQRIS() {
+        const bookingCode = "<?php echo e($booking->booking_code); ?>";
+        const totalAmount = <?php echo e($totalPayment); ?>;
+        const timestamp = Date.now();
+        
+        // Update QRIS image dengan timestamp untuk menghindari cache
+        const qrisImage = document.getElementById('qris-image');
+        qrisImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`BOOKING-${bookingCode}-${totalAmount}-${timestamp}`)}`;
+    }
+
+    // Fungsi untuk refresh QRIS
+    function refreshQRIS() {
+        event.preventDefault();
+        generateQRIS();
+        // Reset timer
+        clearInterval(qrisTimer);
+        qrisTimeLeft = 900;
+        startQRISTimer();
+        
+        // Tampilkan notifikasi
+        showNotification('QRIS telah diperbarui', 'success');
+    }
+
+    // Fungsi untuk memulai timer QRIS
+    function startQRISTimer() {
+        clearInterval(qrisTimer);
+        
+        qrisTimer = setInterval(() => {
+            qrisTimeLeft--;
+            
+            const minutes = Math.floor(qrisTimeLeft / 60);
+            const seconds = qrisTimeLeft % 60;
+            
+            document.getElementById('qris-timer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (qrisTimeLeft <= 0) {
+                clearInterval(qrisTimer);
+                showNotification('QRIS telah kadaluarsa, silakan refresh', 'warning');
+            }
+        }, 1000);
+    }
+
+    // Fungsi untuk update tampilan metode yang dipilih
+    function updatePaymentSelected() {
+        const paymentSelected = document.getElementById('payment-selected');
+        
+        if (selectedPaymentMethod && (selectedPaymentMethod === 'qris' || selectedBank)) {
+            let methodText = '';
+            let icon = '';
+            
+            if (selectedPaymentMethod === 'transfer' && selectedBank) {
+                const bankNames = {
+                    'bca': 'BCA Virtual Account',
+                    'mandiri': 'Mandiri Virtual Account',
+                    'bri': 'BRI Virtual Account',
+                    'bni': 'BNI Virtual Account'
+                };
+                methodText = bankNames[selectedBank];
+                icon = '<i class="fas fa-university"></i>';
+            } else if (selectedPaymentMethod === 'qris') {
+                methodText = 'QRIS';
+                icon = '<i class="fas fa-qrcode"></i>';
+            }
+            
+            paymentSelected.innerHTML = `
+                <div class="payment-selected-content">
+                    <div class="payment-method-info">
+                        ${icon}
+                        <span>${methodText}</span>
+                    </div>
+                    <span class="payment-change" onclick="resetPaymentSelection()">Ubah</span>
+                </div>
+            `;
+            paymentSelected.classList.add('show');
+        } else {
+            paymentSelected.classList.remove('show');
+        }
+    }
+
+    // Fungsi untuk reset pilihan pembayaran
+    function resetPaymentSelection() {
+        selectedPaymentMethod = '';
+        selectedBank = '';
+        
+        document.querySelectorAll('.method-card').forEach(el => {
+            el.classList.remove('active', 'selected');
+        });
+        
+        document.getElementById('bank-selection').style.display = 'none';
+        document.getElementById('qris-display').style.display = 'none';
+        document.getElementById('va-info').style.display = 'none';
+        document.getElementById('payment-selected').classList.remove('show');
+        document.getElementById('pay-button').disabled = true;
+        
+        // Reset input hidden
+        document.getElementById('payment_method').value = '';
+        document.getElementById('bank_code').value = '';
+        
+        // Hentikan timer QRIS
+        clearInterval(qrisTimer);
+    }
+
+    // Fungsi untuk menampilkan notifikasi
+    function showNotification(message, type) {
+        // Buat elemen notifikasi jika belum ada
+        let notification = document.querySelector('.notification-container');
+        if (!notification) {
+            notification = document.createElement('div');
+            notification.className = 'notification-container';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            `;
+            document.body.appendChild(notification);
+        }
+        
+        const notificationEl = document.createElement('div');
+        notificationEl.className = `notification notification-${type}`;
+        notificationEl.style.cssText = `
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            border-left: 4px solid ${type === 'success' ? '#4CAF50' : type === 'warning' ? '#FF9800' : '#f44336'};
+        `;
+        
+        notificationEl.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}" 
+               style="color: ${type === 'success' ? '#4CAF50' : type === 'warning' ? '#FF9800' : '#f44336'}; font-size: 20px;"></i>
+            <span>${message}</span>
+        `;
+        
+        notification.appendChild(notificationEl);
+        
+        // Animasi masuk
+        setTimeout(() => notificationEl.style.transform = 'translateX(0)', 10);
+        
+        // Hapus setelah 3 detik
+        setTimeout(() => {
+            notificationEl.style.transform = 'translateX(120%)';
+            setTimeout(() => notificationEl.remove(), 300);
+        }, 3000);
+    }
+
+    // Validasi form sebelum submit
+    document.getElementById('payment-form').addEventListener('submit', function(e) {
+        if (!selectedPaymentMethod) {
+            e.preventDefault();
+            showNotification('Pilih metode pembayaran terlebih dahulu', 'warning');
+            return;
+        }
+        
+        if (selectedPaymentMethod === 'transfer' && !selectedBank) {
+            e.preventDefault();
+            showNotification('Pilih bank terlebih dahulu', 'warning');
+            return;
+        }
+        
+        // Tampilkan loading
+        const button = document.getElementById('pay-button');
+        button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memproses...';
+        button.disabled = true;
+    });
+
+    // Timer countdown untuk pembayaran
+    <?php if($remainingMinutes > 0): ?>
+    let paymentExpiresAt = new Date("<?php echo e($expiresAt); ?>").getTime();
+    
+    let paymentCountdown = setInterval(function() {
+        let now = new Date().getTime();
+        let distance = paymentExpiresAt - now;
+        
+        let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        
+        document.getElementById("countdown-timer").innerHTML = 
+            minutes + ":" + seconds.toString().padStart(2, '0');
+        
+        if (distance < 0) {
+            clearInterval(paymentCountdown);
+            document.getElementById("countdown-timer").innerHTML = "EXPIRED";
+            showNotification('Waktu pembayaran telah habis', 'error');
+            setTimeout(() => {
+                window.location.href = "<?php echo e(route('pesan.riwayat-booking')); ?>";
+            }, 2000);
+        }
+    }, 1000);
+    <?php endif; ?>
+
+    // Inisialisasi saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set nilai default hidden input
+        document.getElementById('payment_method').value = '';
+        document.getElementById('bank_code').value = '';
+    });
+</script>
 </body>
 </html><?php /**PATH D:\CariArena\resources\views/user/pesan/bayar.blade.php ENDPATH**/ ?>

@@ -1,5 +1,5 @@
 @extends('layouts.user')
-@section('title', 'Pesan Venue')
+@section('title', 'Booking Venue')
 @section('styles')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>

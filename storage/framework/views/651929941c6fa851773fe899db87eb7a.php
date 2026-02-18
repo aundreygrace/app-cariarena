@@ -1,8 +1,8 @@
-@extends('layouts.user')
 
-@section('title', 'Riwayat Pesanan')
 
-@section('styles')
+<?php $__env->startSection('title', 'Riwayat Pesanan'); ?>
+
+<?php $__env->startSection('styles'); ?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
     /* ==== VARIABLES ==== */
@@ -1167,9 +1167,9 @@
         background: var(--primary-hover);
     }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="main-container">
     <div class="content-wrapper">
 
@@ -1183,9 +1183,9 @@
 
         <!-- Order Grid -->
         <div class="order-grid">
-            @if(isset($orders) && count($orders) > 0)
-                @foreach($orders as $order)
-                @php
+            <?php if(isset($orders) && count($orders) > 0): ?>
+                <?php $__currentLoopData = $orders; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $order): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <?php
                     // Controller sudah kirim data lengkap dengan state!
                     // Tidak perlu logic kompleks di blade
                     $statusClass = $order['state']['statusBadge'];
@@ -1214,103 +1214,106 @@
                     $orderId = $order['id'];
                     $category = $order['venue_category'];
                     $venueImage = $order['venue_image'];
-                @endphp
-                    <div class="order-card" data-status="{{ $filterStatus }}">
+                ?>
+                    <div class="order-card" data-status="<?php echo e($filterStatus); ?>">
                         <!-- VENUE HEADER SECTION -->
                         <div class="venue-header">
                             <div class="venue-image-container">
-                                @if(!empty($venueImage))
-                                    <img src="{{ $venueImage }}" 
-                                         alt="{{ $venueName }}" 
+                                <?php if(!empty($venueImage)): ?>
+                                    <img src="<?php echo e($venueImage); ?>" 
+                                         alt="<?php echo e($venueName); ?>" 
                                          class="venue-image"
                                          onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';">
-                                @else
+                                <?php else: ?>
                                     <div class="image-placeholder">
                                         <i class="fa-solid fa-image"></i>
                                     </div>
-                                @endif
+                                <?php endif; ?>
                                 
                                 <!-- VENUE OVERLAY dengan Badge -->
                                 <div class="venue-overlay">
                                     <span class="badge badge-category">
-                                        {{ $order->category ?? 'Badminton' }}
+                                        <?php echo e($order->category ?? 'Badminton'); ?>
+
                                     </span>
-                                    <span class="badge badge-status {{ $statusClass }}">
-                                        {{ $statusText }}
+                                    <span class="badge badge-status <?php echo e($statusClass); ?>">
+                                        <?php echo e($statusText); ?>
+
                                     </span>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="order-header">
-                            <h3 class="venue-name">{{ $venueName }}</h3>
-                            <div class="order-price">Rp {{ $formattedPrice }}</div>
+                            <h3 class="venue-name"><?php echo e($venueName); ?></h3>
+                            <div class="order-price">Rp <?php echo e($formattedPrice); ?></div>
                         </div>
                         
                         <div class="order-details">
                             <div class="detail-item">
                                 <i class="fa-regular fa-calendar"></i>
-                                <span>{{ $dateFormatted }}</span>
+                                <span><?php echo e($dateFormatted); ?></span>
                             </div>
                             <div class="detail-item">
                                 <i class="fa-regular fa-clock"></i>
-                                <span>{{ $timeRange }}</span>
+                                <span><?php echo e($timeRange); ?></span>
                             </div>
                             <div class="detail-item">
                                 <i class="fa-solid fa-location-dot"></i>
-                                <span class="location-text" title="{{ $location }}">{{ $shortLocation }}</span>
+                                <span class="location-text" title="<?php echo e($location); ?>"><?php echo e($shortLocation); ?></span>
                             </div>
                         </div>
                         <!-- BUTTON LOGIC DARI STATE CONTROLLER -->
-                        @if($order['state']['showReview'])
+                        <?php if($order['state']['showReview']): ?>
                             <!-- TAMPILAN REVIEW YANG SUDAH ADA -->
                             <div class="rating-section">
                                 <div class="rating-label">Rating Anda:</div>
                                 <div class="rating-stars">
-                                    @for($i = 1; $i <= 5; $i++)
-                                        @if($i <= $rating)
+                                    <?php for($i = 1; $i <= 5; $i++): ?>
+                                        <?php if($i <= $rating): ?>
                                             <i class="fa-solid fa-star"></i>
-                                        @else
+                                        <?php else: ?>
                                             <i class="fa-regular fa-star"></i>
-                                        @endif
-                                    @endfor
+                                        <?php endif; ?>
+                                    <?php endfor; ?>
                                 </div>
-                                @if(!empty($reviewComment))
-                                    <div class="rating-text">{{ $reviewComment }}</div>
-                                @endif
+                                <?php if(!empty($reviewComment)): ?>
+                                    <div class="rating-text"><?php echo e($reviewComment); ?></div>
+                                <?php endif; ?>
                             </div>
-                        @elseif($order['state']['buttonText'])
+                        <?php elseif($order['state']['buttonText']): ?>
                             <!-- TAMPILAN BUTTON (Review atau Cancel) -->
                             <div class="action-section">
                                 <button 
-                                    class="action-btn {{ $order['state']['buttonAction'] === 'review' ? 'btn-rating' : 'btn-cancel' }}" 
-                                    @if($order['state']['buttonDisabled']) 
+                                    class="action-btn <?php echo e($order['state']['buttonAction'] === 'review' ? 'btn-rating' : 'btn-cancel'); ?>" 
+                                    <?php if($order['state']['buttonDisabled']): ?> 
                                         disabled
-                                        @if(isset($order['state']['disabledReason']))
-                                            title="{{ $order['state']['disabledReason'] }}"
-                                        @endif
-                                    @else
+                                        <?php if(isset($order['state']['disabledReason'])): ?>
+                                            title="<?php echo e($order['state']['disabledReason']); ?>"
+                                        <?php endif; ?>
+                                    <?php else: ?>
                                         onclick="
-                                        @if($order['state']['buttonAction'] === 'review')
-                                            openRatingModal({{ $orderId }}, '{{ $bookingCode }}', '{{ addslashes($venueName) }}', {{ $venueId }})
-                                        @elseif($order['state']['buttonAction'] === 'cancel')
-                                            openCancelModal({{ $orderId }}, '{{ $bookingCode }}', '{{ addslashes($venueName) }}', {{ $totalPrice }})
-                                        @endif
+                                        <?php if($order['state']['buttonAction'] === 'review'): ?>
+                                            openRatingModal(<?php echo e($orderId); ?>, '<?php echo e($bookingCode); ?>', '<?php echo e(addslashes($venueName)); ?>', <?php echo e($venueId); ?>)
+                                        <?php elseif($order['state']['buttonAction'] === 'cancel'): ?>
+                                            openCancelModal(<?php echo e($orderId); ?>, '<?php echo e($bookingCode); ?>', '<?php echo e(addslashes($venueName)); ?>', <?php echo e($totalPrice); ?>)
+                                        <?php endif; ?>
                                         "
-                                    @endif
+                                    <?php endif; ?>
                                 >
-                                    @if($order['state']['buttonAction'] === 'review')
+                                    <?php if($order['state']['buttonAction'] === 'review'): ?>
                                         <i class="fa-regular fa-star"></i>
-                                    @elseif($order['state']['buttonAction'] === 'cancel')
+                                    <?php elseif($order['state']['buttonAction'] === 'cancel'): ?>
                                         <i class="fa-solid fa-xmark"></i>
-                                    @endif
-                                    {{ $order['state']['buttonText'] }}
+                                    <?php endif; ?>
+                                    <?php echo e($order['state']['buttonText']); ?>
+
                                 </button>
                             </div>
-                        @endif
+                        <?php endif; ?>
                     </div>
-                @endforeach
-            @else
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            <?php else: ?>
                 <!-- Empty State -->
                 <div class="empty-state">
                     <div class="empty-icon">
@@ -1321,7 +1324,7 @@
                         Anda belum memiliki riwayat pemesanan venue. Yuk, booking venue favorit Anda sekarang!
                     </p>
                 </div>
-            @endif
+            <?php endif; ?>
         </div>
 
     </div>
@@ -1609,7 +1612,7 @@ async function submitRating() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                 'Accept': 'application/json'
             },
             body: JSON.stringify({
@@ -1690,7 +1693,7 @@ async function confirmCancelBooking() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                 'Accept': 'application/json'
             }
         });
@@ -1736,7 +1739,7 @@ function confirmCancellation() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
             'Accept': 'application/json'
         },
         body: JSON.stringify({
@@ -1804,4 +1807,5 @@ document.querySelectorAll('.order-card').forEach(card => {
     observer.observe(card);
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.user', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\CariArena\resources\views/user/riwayat.blade.php ENDPATH**/ ?>

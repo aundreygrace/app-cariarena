@@ -6,15 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Models\Transaksi;
 
 class Pemesanan extends Model
 {
     use HasFactory;
 
-    // Nama tabel di database
     protected $table = 'booking';
 
-    // Kolom yang dapat diisi (mass assignment)
     protected $fillable = [
         'jadwal_id',
         'venue_id',
@@ -34,7 +33,6 @@ class Pemesanan extends Model
         'payment_expired_at'
     ];
 
-    // Tipe data yang akan di-cast
     protected $casts = [
         'tanggal_booking' => 'date',
         'waktu_booking' => 'string',
@@ -47,7 +45,7 @@ class Pemesanan extends Model
         'updated_at' => 'datetime'
     ];
 
-    // ========== STATUS CONSTANTS SESUAI DATABASE ==========
+    // ========== STATUS CONSTANTS ==========
     
     const STATUS_DRAFT = 'draft';
     const STATUS_PENDING = 'pending';
@@ -85,10 +83,16 @@ class Pemesanan extends Model
         return $this->belongsTo(Jadwal::class, 'jadwal_id');
     }
 
-    public function transaction()
+    public function transaksi()
     {
-        return $this->hasOne(Transaction::class, 'booking_id');
+        return $this->hasOne(
+            Transaksi::class,
+            'booking_id', // FK di transactions
+            'id'          // PK di booking
+        );
     }
+
+
 
     // ========== ACCESSORS ==========
 
@@ -191,6 +195,17 @@ class Pemesanan extends Model
         return $query->where('status', self::STATUS_COMPLETED);
     }
 
+    /**
+     * ✅ PERBAIKAN: Scope dengan nama yang konsisten
+     */
+    public function scopeDenganStatus($query, $status)
+    {
+        if (is_array($status)) {
+            return $query->whereIn('status', $status);
+        }
+        return $query->where('status', $status);
+    }
+
     public function scopeByVenue($query, $venueId)
     {
         if (is_array($venueId)) {
@@ -202,6 +217,14 @@ class Pemesanan extends Model
     public function scopeHariIni($query)
     {
         return $query->whereDate('tanggal_booking', today());
+    }
+
+    /**
+     * ✅ PERBAIKAN: Scope untuk rentang tanggal
+     */
+    public function scopeRentangTanggal($query, $startDate, $endDate)
+    {
+        return $query->whereBetween('tanggal_booking', [$startDate, $endDate]);
     }
 
     public function scopeAkanDatang($query)
@@ -225,22 +248,25 @@ class Pemesanan extends Model
 
     // ========== BUSINESS LOGIC ==========
 
-    public function lockJadwal()
-    {
-        if ($this->jadwal) {
-            $this->jadwal->update([
-                'status' => 'locked',
-                'booking_id' => $this->id
-            ]);
-        }
-    }
-
-
+    /**
+     * Cek apakah booking bisa dibatalkan
+     * 
+     * @return bool
+     */
     public function canBeCancelled()
     {
-        return $this->status === self::STATUS_PENDING && !$this->is_expired;
+        // Hanya pending atau confirmed yang bisa dibatalkan
+        // Dan booking belum lewat tanggalnya
+        return in_array($this->status, [self::STATUS_PENDING, self::STATUS_CONFIRMED]) 
+            && $this->tanggal_booking >= now()->toDateString();
     }
 
+    /**
+     * ✅ PERBAIKAN: Mark booking as confirmed dan update jadwal
+     * 
+     * @param string|null $paymentMethod
+     * @return $this
+     */
     public function markAsConfirmed($paymentMethod = null)
     {
         $this->update([
@@ -250,14 +276,24 @@ class Pemesanan extends Model
             'payment_expired_at' => null
         ]);
 
-        // Update related jadwal
+        // ✅ UPDATE JADWAL MENJADI BOOKED
         if ($this->jadwal) {
             $this->jadwal->markAsBooked($this->id);
+            \Log::info("✅ Jadwal #{$this->jadwal->id} di-mark sebagai BOOKED");
+        } else {
+            \Log::warning("⚠️ Booking #{$this->id} tidak punya relasi ke jadwal");
         }
 
         return $this;
     }
 
+    /**
+     * Mark as paid (alias untuk markAsConfirmed)
+     * 
+     * @param string|null $paymentMethod
+     * @param int|null $amount
+     * @return $this
+     */
     public function markAsPaid($paymentMethod = null, $amount = null)
     {
         $data = [
@@ -273,7 +309,7 @@ class Pemesanan extends Model
 
         $this->update($data);
 
-        // Update related jadwal
+        // Update jadwal
         if ($this->jadwal) {
             $this->jadwal->markAsBooked($this->id);
         }
@@ -281,6 +317,12 @@ class Pemesanan extends Model
         return $this;
     }
 
+    /**
+     * ✅ PERBAIKAN: Cancel booking dan unlock jadwal
+     * 
+     * @param string|null $reason
+     * @return $this
+     */
     public function markAsCancelled($reason = null)
     {
         $this->update([
@@ -291,14 +333,20 @@ class Pemesanan extends Model
                 : "Dibatalkan pada: " . now()->format('Y-m-d H:i:s') . ($reason ? " | Alasan: {$reason}" : "")
         ]);
 
-        // Unlock jadwal
+        // ✅ UNLOCK JADWAL
         if ($this->jadwal) {
             $this->jadwal->unlock();
+            \Log::info("✅ Jadwal #{$this->jadwal->id} di-unlock (booking cancelled)");
         }
 
         return $this;
     }
 
+    /**
+     * ✅ PERBAIKAN: Mark as expired dan unlock jadwal
+     * 
+     * @return $this
+     */
     public function markAsExpired()
     {
         $this->update([
@@ -306,14 +354,20 @@ class Pemesanan extends Model
             'payment_expired_at' => null
         ]);
 
-        // Unlock jadwal
+        // ✅ UNLOCK JADWAL
         if ($this->jadwal) {
             $this->jadwal->unlock();
+            \Log::info("✅ Jadwal #{$this->jadwal->id} di-unlock (booking expired)");
         }
 
         return $this;
     }
 
+    /**
+     * Mark as completed
+     * 
+     * @return $this
+     */
     public function markAsCompleted()
     {
         $this->update([
@@ -325,6 +379,11 @@ class Pemesanan extends Model
 
     // ========== STATIC METHODS ==========
 
+    /**
+     * Generate kode booking unik
+     * 
+     * @return string
+     */
     public static function generateBookingCode()
     {
         do {
@@ -334,17 +393,46 @@ class Pemesanan extends Model
         return $code;
     }
 
-    public static function hasConflict($venueId, $date, $start, $end) 
+    /**
+     * Cek apakah ada conflict dengan booking lain
+     * 
+     * @param int $venueId
+     * @param string $date
+     * @param string $start
+     * @param string $end
+     * @param int|null $excludeId
+     * @return bool
+     */
+    public static function hasConflict($venueId, $date, $start, $end, $excludeId = null) 
     {
-         return self::where('venue_id', $venueId) 
-         ->where('tanggal_booking', $date) 
-         ->whereIn('status', ['pending', 'confirmed']) 
-         ->where(function ($q) use ($start, $end) { $q->whereBetween('waktu_booking', [$start, $end]) 
-            ->orWhereBetween('end_time', [$start, $end]) ->orWhere(function ($q) use ($start, $end
-            ) { $q->where('waktu_booking', '<', $start) ->where('end_time', '>', $end); }); }) 
-            ->exists(); 
+        $query = self::where('venue_id', $venueId)
+            ->where('tanggal_booking', $date)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where(function ($q) use ($start, $end) {
+                $q->whereBetween('waktu_booking', [$start, $end])
+                  ->orWhereBetween('end_time', [$start, $end])
+                  ->orWhere(function ($q) use ($start, $end) {
+                      $q->where('waktu_booking', '<', $start)
+                        ->where('end_time', '>', $end);
+                  });
+            });
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->exists();
     }
 
+    /**
+     * Cek ketersediaan untuk booking baru
+     * 
+     * @param int $venueId
+     * @param string $tanggal
+     * @param string $waktuMulai
+     * @param int $durasi
+     * @return bool
+     */
     public static function checkAvailability($venueId, $tanggal, $waktuMulai, $durasi)
     {
         $waktuSelesai = date('H:i:s', strtotime("+{$durasi} hours", strtotime($waktuMulai)));
@@ -352,6 +440,14 @@ class Pemesanan extends Model
         return !self::hasConflict($venueId, $tanggal, $waktuMulai, $waktuSelesai);
     }
 
+    /**
+     * Get statistik booking
+     * 
+     * @param int|array|null $venueIds
+     * @param string|null $startDate
+     * @param string|null $endDate
+     * @return array
+     */
     public static function getBookingStats($venueIds = null, $startDate = null, $endDate = null)
     {
         $query = self::query();
@@ -369,11 +465,11 @@ class Pemesanan extends Model
         }
 
         $total = $query->count();
-        $pending = $query->clone()->where('status', self::STATUS_PENDING)->count();
-        $confirmed = $query->clone()->where('status', self::STATUS_CONFIRMED)->count();
-        $completed = $query->clone()->where('status', self::STATUS_COMPLETED)->count();
-        $cancelled = $query->clone()->where('status', self::STATUS_CANCELLED)->count();
-        $revenue = $query->clone()->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED])
+        $pending = (clone $query)->where('status', self::STATUS_PENDING)->count();
+        $confirmed = (clone $query)->where('status', self::STATUS_CONFIRMED)->count();
+        $completed = (clone $query)->where('status', self::STATUS_COMPLETED)->count();
+        $cancelled = (clone $query)->where('status', self::STATUS_CANCELLED)->count();
+        $revenue = (clone $query)->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED])
                           ->sum('total_biaya');
 
         return [
@@ -386,10 +482,17 @@ class Pemesanan extends Model
         ];
     }
 
+    /**
+     * ✅ METHOD UTAMA: Cleanup booking yang expired
+     * Method ini dipanggil oleh scheduler
+     * 
+     * @return int Jumlah booking yang di-cleanup
+     */
     public static function cleanupExpiredBookings()
     {
         $expiredBookings = self::where('status', self::STATUS_PENDING)
             ->where('payment_expired_at', '<=', now())
+            ->with('jadwal')
             ->get();
 
         $count = 0;
@@ -398,11 +501,20 @@ class Pemesanan extends Model
             $count++;
         }
 
+        if ($count > 0) {
+            \Log::info("✅ Cleaned up {$count} expired bookings");
+        }
+
         return $count;
     }
 
     // ========== FORMAT UNTUK FRONTEND ==========
 
+    /**
+     * Format data untuk ditampilkan di riwayat booking
+     * 
+     * @return array
+     */
     public function formatUntukRiwayat()
     {
         return [
@@ -448,6 +560,11 @@ class Pemesanan extends Model
         ];
     }
 
+    /**
+     * Get CSS class untuk badge status
+     * 
+     * @return string
+     */
     public function getStatusBadgeClass()
     {
         switch ($this->status) {
@@ -465,6 +582,4 @@ class Pemesanan extends Model
                 return 'badge-secondary';
         }
     }
-
-    
 }

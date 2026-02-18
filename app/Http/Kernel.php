@@ -69,6 +69,7 @@ class Kernel extends HttpKernel
         'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        
         //Spatie Permission
         'role' => Role::class,
         'permission' => Permission::class,
@@ -87,6 +88,9 @@ class Kernel extends HttpKernel
         'admin.guest' => \App\Http\Middleware\RedirectIfAdminAuthenticated::class,
         'venue.guest' => \App\Http\Middleware\RedirectIfVenueAuthenticated::class,
         'user.guest' => \App\Http\Middleware\RedirectIfUserAuthenticated::class,
+        
+        // ✅ TAMBAHAN BARU - Middleware untuk cleanup expired slots
+        'cleanup.slots' => \App\Http\Middleware\CleanupExpiredSlots::class,
     ];
 
     /**
@@ -108,29 +112,4 @@ class Kernel extends HttpKernel
         \Illuminate\Routing\Middleware\SubstituteBindings::class,
         \Illuminate\Auth\Middleware\Authorize::class,
     ];
-
-    // Di app/Console/Kernel.php
-    protected function schedule(Schedule $schedule)
-    {
-        // Cleanup expired bookings every minute
-        $schedule->call(function () {
-            $count = \App\Models\Booking::cleanupExpiredBookings();
-            if ($count > 0) {
-                \Log::info("Cleaned up {$count} expired bookings at " . now());
-            }
-        })->everyMinute();
-        
-        // Cleanup expired jadwal locks every minute
-        $schedule->call(function () {
-            $count = \App\Models\Jadwal::releaseExpiredLocks();
-            if ($count > 0) {
-                \Log::info("Released {$count} expired jadwal locks at " . now());
-            }
-        })->everyMinute();
-        
-        $schedule->call(function () {
-            \App\Models\Pemesanan::cleanupExpiredBookings();
-        })->everyMinute();
-        
-    }
 }

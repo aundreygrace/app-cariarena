@@ -50,44 +50,18 @@
                     <label>Foto Profil</label>
                     <div class="photo-upload">
                         <div class="photo-preview" id="photoPreview">
-                            @php
-                                $user = auth()->user();
-                                $photoUrl = null;
-                                $hasPhoto = false;
-                                
-                                if ($user->profile_photo) {
-                                    // Cek file di berbagai lokasi
-                                    $publicPath = public_path('storage/profile-photos/' . $user->profile_photo);
-                                    $storagePath = storage_path('app/public/profile-photos/' . $user->profile_photo);
-                                    
-                                    // Prioritaskan public path
-                                    if (file_exists($publicPath)) {
-                                        $photoUrl = asset('storage/profile-photos/' . $user->profile_photo);
-                                        $hasPhoto = true;
-                                    } 
-                                    // Cek storage path
-                                    elseif (file_exists($storagePath)) {
-                                        $photoUrl = asset('storage/profile-photos/' . $user->profile_photo);
-                                        $hasPhoto = true;
-                                        // Coba buat symlink jika belum ada
-                                        try {
-                                            if (!file_exists(public_path('storage/profile-photos'))) {
-                                                mkdir(public_path('storage/profile-photos'), 0755, true);
-                                            }
-                                            symlink($storagePath, $publicPath);
-                                        } catch (\Exception $e) {
-                                            // Fallback: gunakan route khusus
-                                            $photoUrl = route('venue.profile.photo', ['filename' => $user->profile_photo]);
-                                        }
-                                    }
-                                }
-                                
-                                // Tambahkan timestamp untuk force refresh jika baru diupdate
-                                if(session('profile_photo_updated') && $hasPhoto) {
-                                    $photoUrl .= '?t=' . time();
-                                    session()->forget('profile_photo_updated');
-                                }
-                            @endphp
+                        @php
+                            $user = auth()->user();
+                            // ✅ Using Model Accessor - Auto detect role!
+                            $photoUrl = $user->profile_photo_url;
+                            $hasPhoto = !is_null($photoUrl);
+                            
+                            // Add timestamp for cache busting
+                            if(session('profile_photo_updated') && $hasPhoto) {
+                                $photoUrl .= '?t=' . time();
+                                session()->forget('profile_photo_updated');
+                            }
+                        @endphp
                             
                             @if($hasPhoto && $photoUrl)
                                 <img src="{{ $photoUrl }}" 

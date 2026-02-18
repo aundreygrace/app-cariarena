@@ -1,5 +1,5 @@
 @extends('layouts.user')
-@section('title', 'Pesan Venue - ' . ($venue->name ?? 'Venue'))
+@section('title', 'Booking Venue - ' . ($venue->name ?? 'Venue'))
 @section('content')
 
 <style>
@@ -1601,7 +1601,7 @@ body {
                 <button class="back-button" data-prev="duration-section">
                     <i class="fas fa-arrow-left"></i> <span>Kembali ke Durasi</span>
                 </button>
-                <button class="payment-button" id="payment-button">
+                <button type="button" class="payment-button" id="payment-button">
                     <i class="fas fa-lock"></i> <span>Lanjut ke Pembayaran</span>
                 </button>
             </div>
@@ -1630,15 +1630,24 @@ body {
 <!-- Form untuk submit booking -->
 <form id="booking-form" method="POST" action="{{ route('pesan.process-booking') }}" style="display: none;">
     @csrf
-    <input type="hidden" name="venue_id" id="form-venue-id" value="{{ $venue->id ?? '' }}">
-    <input type="hidden" name="jadwal_id" id="form-jadwal-id">
+    <input type="hidden" name="venue_id" value="{{ $venue->id }}">
     <input type="hidden" name="tanggal_booking" id="form-tanggal-booking">
     <input type="hidden" name="waktu_booking" id="form-waktu-booking">
     <input type="hidden" name="durasi" id="form-durasi">
 </form>
 
 <script>
+    const backendSelectedDate = "{{ $selectedDate }}";
+    // ✅ Data dari backend
     const jadwalList = @json($jadwalList ?? []);
+
+    // ✅ DEBUG: Log data yang diterima (HAPUS setelah production)
+    console.log('=== INIT BOOKING DATA ===');
+    console.log('Jadwal List:', jadwalList);
+    console.log('Total Jadwal:', jadwalList.length);
+    if (jadwalList.length > 0) {
+        console.log('Sample Jadwal:', jadwalList[0]);
+    }
 
     let currentVenue = {
         id: {{ $venue->id ?? 0 }},
@@ -1711,7 +1720,9 @@ body {
     }
     
     let currentDate = new Date();
-    let selectedDate = new Date();
+    let selectedDate = backendSelectedDate
+    ? new Date(backendSelectedDate + 'T00:00:00')
+    : new Date();
     
     function updateCalendar() {
         const calendarBody = document.getElementById('calendar-body');
@@ -1793,8 +1804,7 @@ body {
         checkDateSelection();
     }
     
-    function selectDate(day)
-     {
+    function selectDate(day) {
         const selectedDay = new Date(
             currentDate.getFullYear(),
             currentDate.getMonth(),
@@ -1804,10 +1814,13 @@ body {
         selectedDate = selectedDay;
         updateCalendar();
 
-        const dateString = selectedDate.toISOString().split('T')[0];
+        const dateString = formatDateLocal(selectedDate);
+        
+        console.log('=== DATE SELECTED ===');
+        console.log('Selected date:', dateString);
+        
         initializeTimeSlots(dateString); 
     }
-
     
     document.getElementById('prev-month').addEventListener('click', () => navigateMonth(-1));
     document.getElementById('next-month').addEventListener('click', () => navigateMonth(1));
@@ -1830,7 +1843,7 @@ body {
     });
 
     function checkDateSelection() {
-        const dateString = selectedDate.toISOString().split('T')[0];
+        const dateString = formatDateLocal(selectedDate);
         const nextButton = document.getElementById('date-next-btn');
         const alertDiv = document.getElementById('date-alert');
 
@@ -1880,22 +1893,44 @@ body {
         }
     }
     
-    function initializeTimeSlots(dateString) 
-    {
+    // ✅ FUNGSI YANG DIPERBAIKI - HAPUS FILTER STATUS
+    function initializeTimeSlots(dateString) {
         const timeGrid = document.getElementById('time-grid');
         timeGrid.innerHTML = '';
 
-        const filtered = jadwalList.filter(j =>
-            j.tanggal === dateString && j.status === 'Available'
-        );
+        console.log('=== INIT TIME SLOTS ===');
+        console.log('Date to filter:', dateString);
+        console.log('Total jadwal available:', jadwalList.length);
+
+        // ✅ PERBAIKAN: Filter HANYA berdasarkan tanggal
+        // Status sudah di-filter di backend (controller hanya kirim yang Available)
+        const filtered = jadwalList.filter(j => {
+            const match = j.tanggal === dateString;
+            console.log(`Jadwal ID ${j.id}: tanggal=${j.tanggal}, looking for=${dateString}, match=${match}`);
+            return match;
+        });
+
+        console.log('Filtered slots:', filtered.length);
 
         if (filtered.length === 0) {
-            timeGrid.innerHTML = '<p>Tidak ada slot tersedia untuk tanggal ini</p>';
+            timeGrid.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #666; grid-column: 1 / -1;">
+                    <i class="fas fa-calendar-times" style="font-size: 3rem; color: #ddd; margin-bottom: 1rem;"></i>
+                    <p style="font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 500;">
+                        Tidak ada slot tersedia untuk tanggal ini
+                    </p>
+                    <small style="color: #999;">
+                        Tanggal yang dipilih: ${dateString}
+                    </small>
+                </div>
+            `;
+            checkTimeSelection();
             return;
         }
 
         filtered.forEach(jadwal => {
-            const start = jadwal.waktu_mulai.substring(0,5);
+            // ✅ PERBAIKAN: Gunakan waktu_mulai langsung (sudah format HH:MM dari controller)
+            const start = jadwal.waktu_mulai;
 
             const slot = document.createElement('div');
             slot.className = 'time-slot';
@@ -1925,9 +1960,6 @@ body {
         checkTimeSelection();
     }
 
-
-
-
     function initializeDurationOptions() {
         document.querySelectorAll('.duration-option').forEach(option => {
             option.addEventListener('click', function() {
@@ -1950,7 +1982,7 @@ body {
         if (!selectedTimeSlot) return;
 
         const selectedTime = selectedTimeSlot.querySelector('.time').textContent;
-        const dateString = selectedDate.toISOString().split('T')[0];
+        const dateString = formatDateLocal(selectedDate);
         
         document.querySelectorAll('.duration-option').forEach(option => {
             option.classList.remove('disabled');
@@ -1989,7 +2021,6 @@ body {
         }
         return false;
     }
-
     
     function updateSummary() {
         const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
@@ -2013,7 +2044,6 @@ body {
                 document.getElementById('summary-time').textContent =
                     `${startTime} - ${endTime}`;
             }
-
         }
         
         const selectedDuration = document.querySelector('.duration-option.selected');
@@ -2027,110 +2057,150 @@ body {
         }
     }
     
-    function proceedToPayment() {
+
+// ================================================================
+// REPLACE FUNCTION proceedToPayment() DI pembayaran.blade.php
+// Cari line ~2061 dan ganti seluruh function dengan ini
+// ================================================================
+
+function proceedToPayment() {
+    console.log('🚀 === PROCEED TO PAYMENT CALLED ===');
+    
     const button = document.getElementById('payment-button');
-    const originalText = button.innerHTML;
-    
-    button.innerHTML = '<span class="loading"></span> Memproses...';
-    button.disabled = true;
-    
-    const selectedTimeSlot = document.querySelector('.time-slot.selected');
-    const selectedDuration = document.querySelector('.duration-option.selected');
-    
-    if (!selectedTimeSlot || !selectedDuration || selectedDuration.classList.contains('disabled')) {
-        alert('Silakan lengkapi pilihan waktu dan durasi yang valid terlebih dahulu');
-        button.innerHTML = originalText;
-        button.disabled = false;
+    if (!button) {
+        console.error('❌ ERROR: Payment button not found!');
+        alert('Error: Tombol pembayaran tidak ditemukan!');
         return;
     }
     
-    // Ambil data yang diperlukan
-    const jadwalId = selectedTimeSlot.dataset.jadwalId;
-    const waktu = selectedTimeSlot.dataset.startTime;
-    const durasi = parseInt(selectedDuration.dataset.hours);
-    const tanggal = selectedDate.toISOString().split('T')[0];
+    const originalText = button.innerHTML;
     
-    // Validasi dengan API sebelum submit
-    fetch('{{ route("pesan.available-slots") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({
-            venue_id: {{ $venue->id }},
-            jadwal_id: jadwalId,
-            tanggal: tanggal,
-            waktu_mulai: waktu,
-            durasi: durasi
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.available) {
-            // Isi form dan submit
-            document.getElementById('form-venue-id').value = {{ $venue->id }};
-            document.getElementById('form-jadwal-id').value = jadwalId;
-            document.getElementById('form-tanggal-booking').value = tanggal;
-            document.getElementById('form-waktu-booking').value = waktu;
-            document.getElementById('form-durasi').value = durasi;
-            
-            // Submit form
-            document.getElementById('booking-form').submit();
-        } else {
-            alert('Maaf, slot sudah tidak tersedia: ' + data.message);
+    // Tampilkan loading
+    button.innerHTML = '<span class="loading"></span> Memproses...';
+    button.disabled = true;
+    
+    try {
+        // Validasi: pastikan waktu dan durasi sudah dipilih
+        const selectedTimeSlot = document.querySelector('.time-slot.selected');
+        const selectedDuration = document.querySelector('.duration-option.selected');
+        
+        console.log('🔍 Selected time slot:', selectedTimeSlot);
+        console.log('🔍 Selected duration:', selectedDuration);
+        
+        if (!selectedTimeSlot) {
+            console.error('❌ No time slot selected!');
+            alert('Silakan pilih waktu terlebih dahulu');
             button.innerHTML = originalText;
             button.disabled = false;
-            
-            // Tampilkan modal konflik
-            showConflictModal();
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Terjadi kesalahan saat memproses booking.');
+        
+        if (!selectedDuration) {
+            console.error('❌ No duration selected!');
+            alert('Silakan pilih durasi terlebih dahulu');
+            button.innerHTML = originalText;
+            button.disabled = false;
+            return;
+        }
+        
+        if (selectedDuration.classList.contains('disabled')) {
+            console.error('❌ Selected duration is disabled!');
+            alert('Durasi yang dipilih tidak valid');
+            button.innerHTML = originalText;
+            button.disabled = false;
+            return;
+        }
+        
+        // ✅ Ambil data dari pilihan user
+        const waktu = selectedTimeSlot.dataset.startTime;
+        const durasi = parseInt(selectedDuration.dataset.hours);
+        
+        console.log('📊 Waktu:', waktu);
+        console.log('📊 Durasi:', durasi);
+        console.log('📊 selectedDate variable:', selectedDate);
+        console.log('📊 selectedDate type:', typeof selectedDate);
+        
+        if (!selectedDate) {
+            console.error('❌ selectedDate is undefined!');
+            alert('Error: Tanggal tidak valid!');
+            button.innerHTML = originalText;
+            button.disabled = false;
+            return;
+        }
+        
+        // Format tanggal
+        let tanggal;
+        try {
+            // Jika selectedDate adalah string, convert ke Date object
+            if (typeof selectedDate === 'string') {
+                const dateObj = new Date(selectedDate + 'T00:00:00');
+                tanggal = formatDateLocal(dateObj);
+            } else if (selectedDate instanceof Date) {
+                tanggal = formatDateLocal(selectedDate);
+            } else {
+                throw new Error('selectedDate format tidak valid: ' + typeof selectedDate);
+            }
+            
+            console.log('✅ Formatted tanggal:', tanggal);
+        } catch (e) {
+            console.error('❌ ERROR formatting date:', e);
+            alert('Error: Gagal memformat tanggal! ' + e.message);
+            button.innerHTML = originalText;
+            button.disabled = false;
+            return;
+        }
+        
+        console.log('📋 === FINAL BOOKING DATA ===');
+        console.log('Venue ID:', {{ $venue->id }});
+        console.log('Tanggal:', tanggal);
+        console.log('Waktu:', waktu);
+        console.log('Durasi:', durasi);
+        
+        // ✅ Set form values
+        document.getElementById('form-tanggal-booking').value = tanggal;
+        document.getElementById('form-waktu-booking').value = waktu;
+        document.getElementById('form-durasi').value = durasi;
+        
+        // DEBUG: Cek form values setelah di-set
+        console.log('📝 === FORM VALUES AFTER SET ===');
+        console.log('venue_id:', document.querySelector('input[name="venue_id"]').value);
+        console.log('tanggal_booking:', document.getElementById('form-tanggal-booking').value);
+        console.log('waktu_booking:', document.getElementById('form-waktu-booking').value);
+        console.log('durasi:', document.getElementById('form-durasi').value);
+        
+        // ✅ Submit form ke backend
+        const form = document.getElementById('booking-form');
+        if (!form) {
+            console.error('❌ Form not found!');
+            alert('Error: Form tidak ditemukan!');
+            button.innerHTML = originalText;
+            button.disabled = false;
+            return;
+        }
+        
+        console.log('🔗 Form action:', form.action);
+        console.log('🔗 Form method:', form.method);
+        console.log('🚀 Submitting form...');
+        
+        // Submit!
+        form.submit();
+        
+        console.log('✅ Form submitted successfully!');
+        
+    } catch (error) {
+        console.error('💥 FATAL ERROR in proceedToPayment:', error);
+        console.error('Stack trace:', error.stack);
+        alert('Error: ' + error.message);
         button.innerHTML = originalText;
         button.disabled = false;
-    });
+    }
 }
 
+
+
+
+
     document.getElementById('payment-button').addEventListener('click', proceedToPayment);
-    
-    function showConflictModal() {
-        const modal = document.getElementById('conflict-modal');
-        modal.classList.add('active');
-        
-        document.getElementById('modal-close').addEventListener('click', function() {
-            modal.classList.remove('active');
-        });
-        
-        document.getElementById('modal-refresh').addEventListener('click', function() {
-            modal.classList.remove('active');
-            refreshAvailability();
-        });
-    }
-
-    function refreshAvailability() {
-        updateAvailableSlots();
-    }
-
-    function updateAvailableSlots() {
-        const dateString = selectedDate.toISOString().split('T')[0];
-        const timeSlots = document.querySelectorAll('.time-slot');
-        
-        timeSlots.forEach(slot => {
-            const time = slot.querySelector('.time').textContent;
-            const timeKey = `${dateString}_${time}`;
-            
-            slot.classList.remove('booked');
-            
-            if (bookedTimeSlots[timeKey]) {
-                slot.classList.add('booked');
-            }
-        });
-        
-        updateDurationOptions();
-    }
 
     function handleResponsiveLayout() {
         const isMobile = window.innerWidth <= 768;
@@ -2164,8 +2234,13 @@ body {
     }
     
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('=== DOM LOADED ===');
+        
         updateCalendar();
+        
         const todayString = selectedDate.toISOString().split('T')[0];
+        console.log('Initializing with date:', todayString);
+        
         initializeTimeSlots(todayString);
         initializeDurationOptions();
         handleResponsiveLayout();
@@ -2183,7 +2258,143 @@ body {
         
         document.addEventListener('touchstart', function() {}, {passive: true});
         window.addEventListener('resize', setViewportHeight);
-    });
+            });
+
+            // Helper function untuk format tanggal (sudah ada di code, pastikan ada)
+            function formatDateLocal(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            // ========================================
+// PATCH JAVASCRIPT - Tambahkan di pembayaran.blade.php
+// Letakkan SEBELUM function proceedToPayment()
+// ========================================
+
+// DEBUG: Cek elemen-elemen penting
+console.log('=== DEBUGGING FORM ELEMENTS ===');
+console.log('Form exists:', document.getElementById('booking-form') !== null);
+console.log('Button exists:', document.getElementById('payment-button') !== null);
+console.log('Tanggal input exists:', document.getElementById('form-tanggal-booking') !== null);
+console.log('Waktu input exists:', document.getElementById('form-waktu-booking') !== null);
+console.log('Durasi input exists:', document.getElementById('form-durasi') !== null);
+
+// REPLACE function proceedToPayment dengan yang ini:
+function proceedToPayment() {
+    console.log('=== PROCEED TO PAYMENT CALLED ===');
+    
+    const button = document.getElementById('payment-button');
+    if (!button) {
+        console.error('ERROR: Payment button not found!');
+        alert('Error: Tombol pembayaran tidak ditemukan!');
+        return;
+    }
+    
+    const originalText = button.innerHTML;
+    
+    // Tampilkan loading
+    button.innerHTML = '<span class="loading"></span> Memproses...';
+    button.disabled = true;
+    
+    // Validasi: pastikan waktu dan durasi sudah dipilih
+    const selectedTimeSlot = document.querySelector('.time-slot.selected');
+    const selectedDuration = document.querySelector('.duration-option.selected');
+    
+    console.log('Selected time slot:', selectedTimeSlot);
+    console.log('Selected duration:', selectedDuration);
+    
+    if (!selectedTimeSlot) {
+        console.error('ERROR: No time slot selected!');
+        alert('Silakan pilih waktu terlebih dahulu');
+        button.innerHTML = originalText;
+        button.disabled = false;
+        return;
+    }
+    
+    if (!selectedDuration) {
+        console.error('ERROR: No duration selected!');
+        alert('Silakan pilih durasi terlebih dahulu');
+        button.innerHTML = originalText;
+        button.disabled = false;
+        return;
+    }
+    
+    if (selectedDuration.classList.contains('disabled')) {
+        console.error('ERROR: Selected duration is disabled!');
+        alert('Durasi yang dipilih tidak valid');
+        button.innerHTML = originalText;
+        button.disabled = false;
+        return;
+    }
+    
+    // ✅ Ambil data dari pilihan user
+    const waktu = selectedTimeSlot.dataset.startTime; // Format: "08:00"
+    const durasi = parseInt(selectedDuration.dataset.hours); // Integer: 1, 2, 3, dll
+    
+    console.log('selectedDate variable:', selectedDate);
+    console.log('selectedDate type:', typeof selectedDate);
+    
+    if (!selectedDate) {
+        console.error('ERROR: selectedDate is undefined!');
+        alert('Error: Tanggal tidak valid!');
+        button.innerHTML = originalText;
+        button.disabled = false;
+        return;
+    }
+    
+    let tanggal;
+    try {
+        tanggal = formatDateLocal(selectedDate); // Format: "2025-02-10"
+        console.log('Formatted tanggal:', tanggal);
+    } catch (e) {
+        console.error('ERROR formatting date:', e);
+        alert('Error: Gagal memformat tanggal!');
+        button.innerHTML = originalText;
+        button.disabled = false;
+        return;
+    }
+    
+    console.log('=== FINAL BOOKING DATA ===');
+    console.log('Venue ID:', {{ $venue->id }});
+    console.log('Tanggal:', tanggal);
+    console.log('Waktu:', waktu);
+    console.log('Durasi:', durasi);
+    
+    // ✅ Set form values (TANPA jadwal_id)
+    document.getElementById('form-tanggal-booking').value = tanggal;
+    document.getElementById('form-waktu-booking').value = waktu;
+    document.getElementById('form-durasi').value = durasi;
+    
+    // DEBUG: Cek form values setelah di-set
+    console.log('=== FORM VALUES AFTER SET ===');
+    console.log('venue_id:', document.querySelector('input[name="venue_id"]').value);
+    console.log('tanggal_booking:', document.getElementById('form-tanggal-booking').value);
+    console.log('waktu_booking:', document.getElementById('form-waktu-booking').value);
+    console.log('durasi:', document.getElementById('form-durasi').value);
+    
+    // ✅ Submit form ke backend
+    console.log('Submitting form...');
+    
+    const form = document.getElementById('booking-form');
+    if (!form) {
+        console.error('ERROR: Form not found!');
+        alert('Error: Form tidak ditemukan!');
+        button.innerHTML = originalText;
+        button.disabled = false;
+        return;
+    }
+    
+    console.log('Form action:', form.action);
+    console.log('Form method:', form.method);
+    
+    // Submit!
+    form.submit();
+    
+    console.log('Form submitted!');
+}
+
 </script>
 
 @endsection

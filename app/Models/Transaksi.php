@@ -10,6 +10,7 @@ use App\Models\User; // TAMBAHKAN INI
 use App\Models\Pemesanan; // TAMBAHKAN INI
 use App\Models\Venue; // TAMBAHKAN INI
 
+
 class Transaksi extends Model
 {
     use HasFactory;
@@ -65,6 +66,16 @@ class Transaksi extends Model
     {
         return 'Rp ' . number_format($this->amount, 0, ',', '.');
     }
+
+    public function booking()
+    {
+        return $this->belongsTo(
+            Pemesanan::class,
+            'booking_id',
+            'id'
+        );
+    }
+
 
     /**
      * Accessor untuk format tanggal transaksi
@@ -247,13 +258,7 @@ class Transaksi extends Model
 
     // ========== RELASI DENGAN TABEL LAIN ==========
     
-    /**
-     * Relasi dengan model Pemesanan (booking)
-     */
-    public function pemesanan()
-    {
-        return $this->belongsTo(Pemesanan::class, 'customer_id', 'id');
-    }
+
 
     /**
      * Relasi dengan model User melalui pengguna (nama)

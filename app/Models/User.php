@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -32,6 +33,45 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
         'social_media' => 'array',
     ];
+
+    /**
+     * ✅ GET PROFILE PHOTO URL (Role-based)
+     * No need for helper!
+     */
+    public function getProfilePhotoUrlAttribute()
+    {
+        if (!$this->profile_photo) {
+            return null;
+        }
+
+        // Determine role folder
+        $isOwner = $this->hasRole('owner');
+        $roleFolder = $isOwner ? 'owners' : 'users';
+        
+        // Build path: storage/profile-photos/{role}/{user_id}/{filename}
+        $path = "profile-photos/{$roleFolder}/{$this->id}/{$this->profile_photo}";
+        
+        // Check if file exists in role-based folder
+        if (Storage::disk('public')->exists($path)) {
+            return asset("storage/{$path}");
+        }
+        
+        // Fallback: check old location (backward compatibility)
+        $oldPath = "profile-photos/{$this->profile_photo}";
+        if (Storage::disk('public')->exists($oldPath)) {
+            return asset("storage/{$oldPath}");
+        }
+        
+        return null;
+    }
+
+    /**
+     * Check if user has profile photo
+     */
+    public function getHasProfilePhotoAttribute()
+    {
+        return !is_null($this->profile_photo_url);
+    }
 
     public function venues()
     {

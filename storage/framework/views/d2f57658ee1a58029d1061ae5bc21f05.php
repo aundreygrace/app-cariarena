@@ -55,10 +55,10 @@
             <h1 class="text-3xl font-semibold text-white mt-4 mb-4 text-center">Profil Saya</h1>
             <p class="text-gray-100 text-sm mb-6 text-center">Kelola akun & preferensi anda</p>
             <?php elseif(request()->routeIs('pesan.index')): ?>
-            <h1 class="text-3xl font-semibold text-white mt-4 mb-4 text-center">Pesan</h1>
+            <h1 class="text-3xl font-semibold text-white mt-4 mb-4 text-center">Booking</h1>
             <p class="text-gray-100 text-sm mb-6 text-center">Kelola pemesanan venue olahraga</p>
             <?php elseif(request()->routeIs('riwayat')): ?>
-            <h1 class="text-3xl font-semibold text-white mt-4 mb-4 text-center">Riwayat Pesanan</h1>
+            <h1 class="text-3xl font-semibold text-white mt-4 mb-4 text-center">Riwayat Booking</h1>
             <p class="text-gray-100 text-sm mb-6 text-center">Lihat dan kelola semua pesanan yang telah Anda buat</p>
             <?php elseif(request()->routeIs('pesan.riwayat-booking')): ?>
             <!-- TAMBAHKAN STYLE INLINE KHUSUS UNTUK HALAMAN DETAIL BOOKING -->
@@ -110,7 +110,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="footer-icon" viewBox="0 0 24 24">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
-            <span class="footer-label">Pesan</span>
+            <span class="footer-label">Booking</span>
         </a>
 
         <!-- Tombol Riwayat -->

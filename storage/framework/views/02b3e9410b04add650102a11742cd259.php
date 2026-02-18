@@ -729,7 +729,7 @@
                         </a>
                         <a href="<?php echo e(route('pesan.booking', ['id' => $venue->id])); ?>" class="action-btn btn-booking">
                             <i class="fas fa-calendar-check"></i>
-                            Pesan Sekarang
+                            Booking Sekarang
                         </a>
                     </div>
                 </div>
