@@ -572,6 +572,14 @@
                     </div>
                 </div>
 
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        @foreach ($errors->all() as $error)
+                            <div>{{ $error }}</div>
+                        @endforeach
+                    </div>
+                @endif
+                
                 <form method="POST" action="{{ route('register.submit') }}" id="registerForm">
                 @csrf
                     <!-- Input hidden untuk role tetap ada (default: user) -->

@@ -24,6 +24,7 @@ class RegisterController extends Controller
             'email'     => 'required|email|unique:users,email',
             'password'  => 'required|min:8|confirmed',
             'phone'     => 'required|string|max:15',
+            'address'   => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -36,6 +37,7 @@ class RegisterController extends Controller
             'email'    => $request->email,
             'password' => Hash::make($request->password),
             'phone'    => $request->phone,
+            'address'  => $request->address,
         ]);
 
         // Assign role user
