@@ -157,6 +157,18 @@ Route::get('/user/login', function () {
     return redirect()->route('login');
 });
 
+Route::get('/debug-session', function() {
+    return [
+        'session_id' => session()->getId(),
+        'session_driver' => config('session.driver'),
+        'session_domain' => config('session.domain'),
+        'session_secure' => config('session.secure'),
+        'session_same_site' => config('session.same_site'),
+        'csrf_token' => csrf_token(),
+        'cookies' => request()->cookies->all(),
+    ];
+});
+
 
 // ==============================
 // ROUTES UNTUK USER
