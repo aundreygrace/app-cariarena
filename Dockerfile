@@ -36,7 +36,7 @@ RUN composer install --optimize-autoloader --no-dev
 
 # Expose port yang akan digunakan Railway
 EXPOSE ${PORT}
-
+RUN php artisan storage:link || true
 CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT}
 
 # Jalankan Laravel di port dari Railway
