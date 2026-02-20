@@ -32,6 +32,7 @@ class AkunController extends Controller
      * ✅ UPDATE PROFILE - Edit Profil Section
      * Storage: storage/app/public/profile-photos/users/{user_id}/
      */
+
     public function updateProfile(Request $request)
     {
         \Log::info("=== UPDATE PROFILE START (USER) ===");
@@ -287,7 +288,7 @@ class AkunController extends Controller
     }
 
     /**
-     * ✅ DELETE ACCOUNT - Dangerous Action
+     *  DELETE ACCOUNT - Dangerous Action
      */
     public function deleteAccount(Request $request)
     {

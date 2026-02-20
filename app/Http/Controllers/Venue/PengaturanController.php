@@ -32,8 +32,7 @@ class PengaturanController extends Controller
     }
 
     /**
-     * ✅ UPDATE PROFILE - Owner Venue
-     * Storage: storage/app/public/profile-photos/owners/{user_id}/
+     * UPDATE PROFILE - Owner Venue
      */
     public function updateProfile(Request $request)
     {
@@ -75,7 +74,7 @@ class PengaturanController extends Controller
             $user->venue_name = $validated['venue_name'] ?? null;
             $user->description = $validated['description'] ?? null;
 
-            // ✅ Handle profile photo upload
+            // Handle profile photo upload
             if ($request->hasFile('profile_photo')) {
                 \Log::info("Profile photo detected (OWNER)");
                 
