@@ -248,7 +248,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', RoleMiddleware::clas
     });
 
     // Manajemen Venue (admin) — prefix name 'admin.venue.' agar tidak bentrok dengan venue owner
-    Route::prefix('venue')->name('admin-venue.')->group(function () {
+    Route::prefix('venue')->name('venue.')->group(function () {
         Route::get('/', [AdminVenueController::class, 'index'])->name('index');
         Route::get('/create', [AdminVenueController::class, 'create'])->name('create');
         Route::post('/', [AdminVenueController::class, 'store'])->name('store');
