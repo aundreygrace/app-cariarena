@@ -429,6 +429,16 @@
         color: #1976D2;
     }
 
+    .badge-secondary {
+        background-color: #F5F5F5;
+        color: #757575;
+    }
+
+    .badge-expired {
+        background-color: #FCE4EC;
+        color: #C62828;
+    }
+
     /* === EMPTY STATE === */
     .empty-state {
         text-align: center;
@@ -824,10 +834,12 @@
                         <label class="form-label">Status</label>
                         <select class="form-select" name="status" id="statusFilter">
                             <option value="">Semua Status</option>
-                            <option value="Menunggu" {{ request('status') == 'Menunggu' ? 'selected' : '' }}>Menunggu</option>
-                            <option value="Terkonfirmasi" {{ request('status') == 'Terkonfirmasi' ? 'selected' : '' }}>Terkonfirmasi</option>
-                            <option value="Selesai" {{ request('status') == 'Selesai' ? 'selected' : '' }}>Selesai</option>
-                            <option value="Dibatalkan" {{ request('status') == 'Dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
+                            <option value="draft"     {{ request('status') == 'draft'     ? 'selected' : '' }}>Draft</option>
+                            <option value="pending"   {{ request('status') == 'pending'   ? 'selected' : '' }}>Menunggu</option>
+                            <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Terkonfirmasi</option>
+                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai</option>
+                            <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Dibatalkan</option>
+                            <option value="expired"   {{ request('status') == 'expired'   ? 'selected' : '' }}>Kadaluarsa</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -903,14 +915,18 @@
                             <td>{{ $pemesanan->durasi ?? '1' }} jam</td>
                             <td class="fw-bold text-success">Rp {{ number_format($pemesanan->total_biaya, 0, ',', '.') }}</td>
                             <td>
-                                @if($pemesanan->status == 'Terkonfirmasi')
+                                @if($pemesanan->status == 'confirmed')
                                     <span class="badge badge-confirmed">Terkonfirmasi</span>
-                                @elseif($pemesanan->status == 'Menunggu')
+                                @elseif($pemesanan->status == 'pending')
                                     <span class="badge badge-pending">Menunggu</span>
-                                @elseif($pemesanan->status == 'Selesai')
+                                @elseif($pemesanan->status == 'draft')
+                                    <span class="badge badge-secondary">Draft</span>
+                                @elseif($pemesanan->status == 'completed')
                                     <span class="badge badge-completed">Selesai</span>
-                                @elseif($pemesanan->status == 'Dibatalkan')
+                                @elseif($pemesanan->status == 'cancelled')
                                     <span class="badge badge-cancelled">Dibatalkan</span>
+                                @elseif($pemesanan->status == 'expired')
+                                    <span class="badge badge-cancelled">Kadaluarsa</span>
                                 @else
                                     <span class="badge badge-secondary">{{ $pemesanan->status }}</span>
                                 @endif
@@ -1212,10 +1228,12 @@
                             <div class="col-md-6">
                                 <label class="form-label">Status</label>
                                 <select class="form-select" name="status">
-                                    <option value="Menunggu" {{ old('status') == 'Menunggu' ? 'selected' : '' }}>Menunggu</option>
-                                    <option value="Terkonfirmasi" {{ old('status') == 'Terkonfirmasi' ? 'selected' : '' }}>Terkonfirmasi</option>
-                                    <option value="Selesai" {{ old('status') == 'Selesai' ? 'selected' : '' }}>Selesai</option>
-                                    <option value="Dibatalkan" {{ old('status') == 'Dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
+                                    <option value="draft"     {{ old('status') == 'draft'     ? 'selected' : '' }}>Draft</option>
+                                    <option value="pending"   {{ old('status', 'pending') == 'pending'   ? 'selected' : '' }}>Menunggu</option>
+                                    <option value="confirmed" {{ old('status') == 'confirmed' ? 'selected' : '' }}>Terkonfirmasi</option>
+                                    <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>Selesai</option>
+                                    <option value="cancelled" {{ old('status') == 'cancelled' ? 'selected' : '' }}>Dibatalkan</option>
+                                    <option value="expired"   {{ old('status') == 'expired'   ? 'selected' : '' }}>Kadaluarsa</option>
                                 </select>
                                 @error('status')
                                     <div class="text-danger small">{{ $message }}</div>
@@ -1304,11 +1322,13 @@
                                 <div class="booking-detail-item">
                                     <div class="booking-detail-label">Status</div>
                                     <div class="booking-detail-value">
-                                        ${pemesanan.status === 'Terkonfirmasi' ? '<span class="badge badge-confirmed">Terkonfirmasi</span>' : 
-                                        pemesanan.status === 'Menunggu' ? '<span class="badge badge-pending">Menunggu</span>' :
-                                        pemesanan.status === 'Selesai' ? '<span class="badge badge-completed">Selesai</span>' :
-                                        pemesanan.status === 'Dibatalkan' ? '<span class="badge badge-cancelled">Dibatalkan</span>' :
-                                        '<span class="badge badge-pending">Menunggu</span>'}
+                                        ${pemesanan.status === 'confirmed'  ? '<span class="badge badge-confirmed">Terkonfirmasi</span>' : 
+                                        pemesanan.status === 'pending'     ? '<span class="badge badge-pending">Menunggu</span>' :
+                                        pemesanan.status === 'draft'       ? '<span class="badge badge-secondary">Draft</span>' :
+                                        pemesanan.status === 'completed'   ? '<span class="badge badge-completed">Selesai</span>' :
+                                        pemesanan.status === 'cancelled'   ? '<span class="badge badge-cancelled">Dibatalkan</span>' :
+                                        pemesanan.status === 'expired'     ? '<span class="badge badge-cancelled">Kadaluarsa</span>' :
+                                        '<span class="badge badge-pending">'+pemesanan.status+'</span>'}
                                     </div>
                                 </div>
                                 <div class="booking-detail-item">

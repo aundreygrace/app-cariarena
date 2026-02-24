@@ -11,38 +11,77 @@ class TransaksiController extends Controller
 {
     public function index(Request $request)
     {
-        // Semua transaksi (semua venue) — admin melihat seluruh data
-        $query = Transaksi::query();
-        
+        // ✅ FIX: Gunakan DB::table dengan LEFT JOIN ke booking dan venues
+        // agar pengguna/nama_venue diambil dari booking jika kolom di transactions kosong/null
+        $query = DB::table('transactions')
+            ->leftJoin('booking', 'transactions.booking_id', '=', 'booking.id')
+            ->leftJoin('venues', 'booking.venue_id', '=', 'venues.id')
+            ->leftJoin('users', 'transactions.customer_id', '=', 'users.id')
+            // ✅ Fallback JOIN: jika booking_id NULL, cari booking milik user ini
+            // berdasarkan customer_id + tanggal yang cocok
+            ->leftJoin(
+                DB::raw('(SELECT DISTINCT ON (user_id, tanggal_booking) booking.user_id, booking.tanggal_booking, venues.name as venue_name
+                          FROM booking
+                          JOIN venues ON booking.venue_id = venues.id
+                          WHERE booking.user_id IS NOT NULL
+                          ORDER BY user_id, tanggal_booking, booking.id DESC) as booking_venue_fallback'),
+                function($join) {
+                    $join->on('transactions.customer_id', '=', 'booking_venue_fallback.user_id')
+                         ->on(DB::raw('DATE(transactions.transaction_date)'), '=', 'booking_venue_fallback.tanggal_booking');
+                }
+            )
+            ->select([
+                'transactions.id',
+                'transactions.transaction_number',
+                'transactions.booking_id',
+                'transactions.customer_id',
+                'transactions.metode_pembayaran',
+                'transactions.amount',
+                'transactions.transaction_date',
+                'transactions.status',
+                'transactions.created_at',
+                'transactions.updated_at',
+                // 3 lapis fallback untuk pengguna
+                DB::raw("COALESCE(NULLIF(transactions.pengguna, ''), booking.nama_customer, users.name) AS pengguna"),
+                // 3 lapis fallback untuk nama_venue:
+                // 1. kolom nama_venue di transactions
+                // 2. venues.name lewat booking_id
+                // 3. venue_name lewat match customer_id + tanggal
+                DB::raw("COALESCE(NULLIF(transactions.nama_venue, ''), venues.name, booking_venue_fallback.venue_name) AS nama_venue"),
+            ]);
+
         // Filter berdasarkan status
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $query->where('transactions.status', $request->status);
         }
         
         // Filter berdasarkan metode pembayaran
         if ($request->filled('metode_pembayaran')) {
-            $query->where('metode_pembayaran', $request->metode_pembayaran);
+            $query->where('transactions.metode_pembayaran', $request->metode_pembayaran);
         }
         
         // Filter berdasarkan tanggal
         if ($request->filled('tanggal_mulai')) {
-            $query->whereDate('transaction_date', '>=', $request->tanggal_mulai);
+            $query->whereDate('transactions.transaction_date', '>=', $request->tanggal_mulai);
         }
         
         if ($request->filled('tanggal_selesai')) {
-            $query->whereDate('transaction_date', '<=', $request->tanggal_selesai);
+            $query->whereDate('transactions.transaction_date', '<=', $request->tanggal_selesai);
         }
 
-        // Filter berdasarkan pencarian nama/nomor transaksi
+        // Filter berdasarkan pencarian — cari di semua sumber (transactions + booking + venues)
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('transaction_number', 'like', '%' . $request->search . '%')
-                  ->orWhere('pengguna', 'like', '%' . $request->search . '%')
-                  ->orWhere('nama_venue', 'like', '%' . $request->search . '%');
+            $search = '%' . $request->search . '%';
+            $query->where(function ($q) use ($search) {
+                $q->where('transactions.transaction_number', 'like', $search)
+                  ->orWhere('transactions.pengguna', 'like', $search)
+                  ->orWhere('transactions.nama_venue', 'like', $search)
+                  ->orWhere('booking.nama_customer', 'like', $search)
+                  ->orWhere('venues.name', 'like', $search);
             });
         }
         
-        $transaksis = $query->orderBy('created_at', 'desc')->paginate(10);
+        $transaksis = $query->orderBy('transactions.created_at', 'desc')->paginate(10);
         
         // Statistik keseluruhan (semua venue)
         $statistik = [
@@ -63,9 +102,52 @@ class TransaksiController extends Controller
     public function show($id)
     {
         try {
-            $transaksi = Transaksi::findOrFail($id);
-            
-            // Jika request AJAX, kembalikan JSON
+            // ✅ FIX: JOIN ke booking dan venues agar pengguna/nama_venue tampil
+            $transaksi = DB::table('transactions')
+                ->leftJoin('booking', 'transactions.booking_id', '=', 'booking.id')
+                ->leftJoin('venues', 'booking.venue_id', '=', 'venues.id')
+                ->leftJoin('users', 'transactions.customer_id', '=', 'users.id')
+                ->leftJoin(
+                    DB::raw('(SELECT DISTINCT ON (user_id, tanggal_booking) booking.user_id, booking.tanggal_booking, venues.name as venue_name
+                              FROM booking
+                              JOIN venues ON booking.venue_id = venues.id
+                              WHERE booking.user_id IS NOT NULL
+                              ORDER BY user_id, tanggal_booking, booking.id DESC) as booking_venue_fallback'),
+                    function($join) {
+                        $join->on('transactions.customer_id', '=', 'booking_venue_fallback.user_id')
+                             ->on(DB::raw('DATE(transactions.transaction_date)'), '=', 'booking_venue_fallback.tanggal_booking');
+                    }
+                )
+                ->select([
+                    'transactions.*',
+                    DB::raw("COALESCE(NULLIF(transactions.pengguna, ''), booking.nama_customer, users.name) AS pengguna"),
+                    DB::raw("COALESCE(NULLIF(transactions.nama_venue, ''), venues.name, booking_venue_fallback.venue_name) AS nama_venue"),
+                    'booking.booking_code',
+                    'booking.tanggal_booking',
+                    'booking.waktu_booking',
+                    'booking.end_time',
+                    'booking.durasi',
+                    DB::raw("COALESCE(booking.customer_phone, users.phone) AS customer_phone"),
+                ])
+                ->where('transactions.id', $id)
+                ->first();
+
+            if (!$transaksi) {
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Transaksi tidak ditemukan'
+                    ], 404);
+                }
+                return redirect()->route('admin.transaksi.index')
+                    ->with('error', 'Transaksi tidak ditemukan.');
+            }
+
+            // Pastikan nilai tidak null untuk JS
+            $transaksi->pengguna   = $transaksi->pengguna   ?? '-';
+            $transaksi->nama_venue = $transaksi->nama_venue ?? '-';
+            $transaksi->metode_pembayaran = $transaksi->metode_pembayaran ?? '-';
+
             if (request()->expectsJson()) {
                 return response()->json([
                     'success' => true,
@@ -79,12 +161,11 @@ class TransaksiController extends Controller
             if (request()->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Transaksi tidak ditemukan'
-                ], 404);
+                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                ], 500);
             }
-
             return redirect()->route('admin.transaksi.index')
-                ->with('error', 'Transaksi tidak ditemukan.');
+                ->with('error', 'Terjadi kesalahan saat memuat transaksi.');
         }
     }
 

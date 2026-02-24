@@ -332,6 +332,16 @@
         color: var(--danger);
     }
 
+    .badge-refunded {
+        background-color: #F3E8FF;
+        color: #7C3AED;
+    }
+
+    .badge-secondary {
+        background-color: #F5F5F5;
+        color: #757575;
+    }
+
     /* === PAYMENT METHOD BADGE === */
     .payment-method {
         font-size: 0.75rem;
@@ -955,9 +965,10 @@
                         <label class="form-label">Status</label>
                         <select class="form-select" name="status" id="statusFilter">
                             <option value="">Semua Status</option>
-                            <option value="pending" <?php echo e(request('status') == 'pending' ? 'selected' : ''); ?>>Menunggu</option>
+                            <option value="pending"   <?php echo e(request('status') == 'pending'   ? 'selected' : ''); ?>>Menunggu</option>
                             <option value="completed" <?php echo e(request('status') == 'completed' ? 'selected' : ''); ?>>Berhasil</option>
                             <option value="cancelled" <?php echo e(request('status') == 'cancelled' ? 'selected' : ''); ?>>Dibatalkan</option>
+                            <option value="refunded"  <?php echo e(request('status') == 'refunded'  ? 'selected' : ''); ?>>Dikembalikan</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -1031,12 +1042,12 @@
                         <?php $__empty_1 = true; $__currentLoopData = $transaksis; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $transaksi): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr>
                             <td class="fw-bold"><?php echo e($transaksi->transaction_number); ?></td>
-                            <td title="<?php echo e($transaksi->pengguna); ?>">
-                                <?php echo e(\Illuminate\Support\Str::limit($transaksi->pengguna, 20)); ?>
+                            <td title="<?php echo e($transaksi->pengguna ?? '-'); ?>">
+                                <?php echo e(\Illuminate\Support\Str::limit($transaksi->pengguna ?? '-', 20)); ?>
 
                             </td>
-                            <td title="<?php echo e($transaksi->nama_venue); ?>">
-                                <?php echo e(\Illuminate\Support\Str::limit($transaksi->nama_venue, 20)); ?>
+                            <td title="<?php echo e($transaksi->nama_venue ?? '-'); ?>">
+                                <?php echo e(\Illuminate\Support\Str::limit($transaksi->nama_venue ?? '-', 20)); ?>
 
                             </td>
                             <td>
@@ -1054,6 +1065,8 @@
                                     <span class="badge badge-success">Berhasil</span>
                                 <?php elseif($transaksi->status == 'cancelled'): ?>
                                     <span class="badge badge-cancelled">Dibatalkan</span>
+                                <?php elseif($transaksi->status == 'refunded'): ?>
+                                    <span class="badge badge-refunded">Dikembalikan</span>
                                 <?php else: ?>
                                     <span class="badge badge-secondary"><?php echo e($transaksi->status); ?></span>
                                 <?php endif; ?>
@@ -1376,26 +1389,50 @@
                                 <div class="transaction-info">
                                     <h4>${transaksi.transaction_number}</h4>
                                     <p>${formattedDate}</p>
-                                    <span class="badge ${transaksi.status === 'pending' ? 'badge-pending' : transaksi.status === 'completed' ? 'badge-success' : 'badge-cancelled'}">
-                                        ${transaksi.status === 'pending' ? 'Menunggu' : transaksi.status === 'completed' ? 'Berhasil' : 'Dibatalkan'}
+                                    <span class="badge ${
+                                        transaksi.status === 'pending'   ? 'badge-pending' :
+                                        transaksi.status === 'completed' ? 'badge-success' :
+                                        transaksi.status === 'cancelled' ? 'badge-cancelled' :
+                                        transaksi.status === 'refunded'  ? 'badge-refunded' :
+                                        'badge-secondary'}">
+                                        ${
+                                        transaksi.status === 'pending'   ? 'Menunggu' :
+                                        transaksi.status === 'completed' ? 'Berhasil' :
+                                        transaksi.status === 'cancelled' ? 'Dibatalkan' :
+                                        transaksi.status === 'refunded'  ? 'Dikembalikan' :
+                                        transaksi.status}
                                     </span>
                                 </div>
                             </div>
                             
                             <div class="transaction-detail-item">
                                 <div class="transaction-detail-label">Pengguna</div>
-                                <div class="transaction-detail-value">${transaksi.pengguna}</div>
+                                <div class="transaction-detail-value">${transaksi.pengguna || '-'}</div>
+                            </div>
+                            <div class="transaction-detail-item">
+                                <div class="transaction-detail-label">No. Telepon</div>
+                                <div class="transaction-detail-value">${transaksi.customer_phone || '-'}</div>
                             </div>
                             <div class="transaction-detail-item">
                                 <div class="transaction-detail-label">Venue</div>
-                                <div class="transaction-detail-value">${transaksi.nama_venue}</div>
+                                <div class="transaction-detail-value">${transaksi.nama_venue || '-'}</div>
                             </div>
+                            ${transaksi.booking_code ? `
+                            <div class="transaction-detail-item">
+                                <div class="transaction-detail-label">Kode Booking</div>
+                                <div class="transaction-detail-value fw-bold">${transaksi.booking_code}</div>
+                            </div>` : ''}
+                            ${transaksi.tanggal_booking ? `
+                            <div class="transaction-detail-item">
+                                <div class="transaction-detail-label">Tanggal Main</div>
+                                <div class="transaction-detail-value">${new Date(transaksi.tanggal_booking).toLocaleDateString('id-ID')} ${transaksi.waktu_booking || ''} - ${transaksi.end_time || ''}</div>
+                            </div>` : ''}
                             <div class="transaction-detail-item">
                                 <div class="transaction-detail-label">Metode Pembayaran</div>
                                 <div class="transaction-detail-value">
                                     <span class="payment-method">
                                         <i class="fas fa-wallet me-1"></i>
-                                        ${transaksi.metode_pembayaran.charAt(0).toUpperCase() + transaksi.metode_pembayaran.slice(1)}
+                                        ${transaksi.metode_pembayaran ? (transaksi.metode_pembayaran.charAt(0).toUpperCase() + transaksi.metode_pembayaran.slice(1)) : '-'}
                                     </span>
                                 </div>
                             </div>
@@ -1408,9 +1445,11 @@
                             <div class="transaction-detail-item">
                                 <div class="transaction-detail-label">Status</div>
                                 <div class="transaction-detail-value">
-                                    ${transaksi.status === 'pending' ? '<span class="badge badge-pending">Menunggu</span>' : 
-                                    transaksi.status === 'completed' ? '<span class="badge badge-success">Berhasil</span>' :
-                                    '<span class="badge badge-cancelled">Dibatalkan</span>'}
+                                    ${transaksi.status === 'pending'   ? '<span class="badge badge-pending">Menunggu</span>' : 
+                                    transaksi.status === 'completed'  ? '<span class="badge badge-success">Berhasil</span>' :
+                                    transaksi.status === 'cancelled'  ? '<span class="badge badge-cancelled">Dibatalkan</span>' :
+                                    transaksi.status === 'refunded'   ? '<span class="badge badge-refunded">Dikembalikan</span>' :
+                                    `<span class="badge badge-secondary">${transaksi.status}</span>`}
                                 </div>
                             </div>
                             <div class="transaction-detail-item">
