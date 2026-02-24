@@ -157,17 +157,8 @@ Route::get('/user/login', function () {
     return redirect()->route('login');
 });
 
-Route::get('/debug-session', function() {
-    return [
-        'session_id' => session()->getId(),
-        'session_driver' => config('session.driver'),
-        'session_domain' => config('session.domain'),
-        'session_secure' => config('session.secure'),
-        'session_same_site' => config('session.same_site'),
-        'csrf_token' => csrf_token(),
-        'cookies' => request()->cookies->all(),
-    ];
-});
+// ❌ DIHAPUS: /debug-session — mengekspos config session ke publik (security risk)
+// Route::get('/debug-session', function() { ... });
 
 
 // ==============================
@@ -256,8 +247,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', RoleMiddleware::clas
         Route::get('/statistics', [UserController::class, 'getStatistics'])->name('statistics');
     });
 
-    // Manajemen Venue
-    Route::prefix('venue')->name('venue.')->group(function () {
+    // Manajemen Venue (admin) — prefix name 'admin.venue.' agar tidak bentrok dengan venue owner
+    Route::prefix('venue')->name('admin-venue.')->group(function () {
         Route::get('/', [AdminVenueController::class, 'index'])->name('index');
         Route::get('/create', [AdminVenueController::class, 'create'])->name('create');
         Route::post('/', [AdminVenueController::class, 'store'])->name('store');
@@ -286,10 +277,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', RoleMiddleware::clas
     // Manajemen Transaksi
     Route::prefix('transaksi')->name('transaksi.')->group(function () {
         Route::get('/', [AdminTransaksiController::class, 'index'])->name('index');
-        Route::get('/{transaksi}', [AdminTransaksiController::class, 'show'])->name('show');
         Route::post('/filter', [AdminTransaksiController::class, 'filter'])->name('filter');
+        Route::get('/{transaksi}', [AdminTransaksiController::class, 'show'])->name('show');
         Route::put('/{transaksi}', [AdminTransaksiController::class, 'update'])->name('update');
         Route::delete('/{transaksi}', [AdminTransaksiController::class, 'destroy'])->name('destroy');
+        // ✅ FIX: method name sesuai TransaksiController (confirmPayment & rejectPayment)
         Route::post('/{transaksi}/confirm', [AdminTransaksiController::class, 'confirmPayment'])->name('confirm');
         Route::post('/{transaksi}/reject', [AdminTransaksiController::class, 'rejectPayment'])->name('reject');
     });
@@ -429,13 +421,9 @@ Route::prefix('venue')->name('venue.')->middleware(['auth', RoleMiddleware::clas
         // Update profil venue
         Route::post('/pengaturan/profile/update', [VenuePengaturanController::class, 'updateProfile'])->name('pengaturan.profile.update');
 
-        // Di routes/web.php dalam group venue
-        Route::get('/venue/pengaturan/debug', [VenuePengaturanController::class, 'debug'])
-            ->name('venue.pengaturan.debug');
-
-        // Di dalam group venue, tambahkan:
-        Route::get('/venue/pengaturan/debug', [VenuePengaturanController::class, 'debug'])->name('venue.pengaturan.debug');
-        Route::post('/venue/pengaturan/debug', [VenuePengaturanController::class, 'debug']);
+        // Debug pengaturan (hanya untuk owner yang sudah login)
+        Route::get('/pengaturan/debug', [VenuePengaturanController::class, 'debug'])->name('pengaturan.debug');
+        Route::post('/pengaturan/debug', [VenuePengaturanController::class, 'debug']);
         
         // Update jadwal venue
         Route::post('/pengaturan/schedule/update', [VenuePengaturanController::class, 'updateSchedule'])->name('pengaturan.schedule.update');
@@ -449,132 +437,3 @@ Route::prefix('venue')->name('venue.')->middleware(['auth', RoleMiddleware::clas
         // Logout dari sesi lain
         Route::post('/pengaturan/logout-other-sessions', [VenuePengaturanController::class, 'logoutOtherSessions'])->name('pengaturan.logout-other-sessions');
     });
-
-// ==============================
-// TEST ROUTE - untuk debugging
-// ==============================
-Route::get('/test-routes', function() {
-    echo "<h1>Route List</h1>";
-    echo "<ul>";
-    foreach (Route::getRoutes() as $route) {
-        echo "<li>" . $route->uri() . " → " . ($route->getName() ?: 'No name') . "</li>";
-    }
-    echo "</ul>";
-});
-
-// ==============================
-// ROUTE CLEAR CACHE
-// ==============================
-Route::get('/clear-cache', function() {
-    Artisan::call('config:clear');
-    Artisan::call('route:clear');
-    Artisan::call('cache:clear');
-    Artisan::call('view:clear');
-    return "Cache cleared successfully!";
-})->name('clear.cache');
-
-Route::get('/debug-jadwal/{venueId}/{date}', function($venueId, $date) {
-    
-    echo "<h1>DEBUG JADWAL</h1>";
-    echo "<p>Venue ID: {$venueId}</p>";
-    echo "<p>Date: {$date}</p>";
-    echo "<hr>";
-    
-    // Test 1: Raw SQL
-    echo "<h2>Test 1: Raw SQL Query</h2>";
-    $rawResults = DB::select("
-        SELECT id, venue_id, tanggal, waktu_mulai, status, locked_until
-        FROM jadwal
-        WHERE venue_id = ? AND tanggal = ?
-    ", [$venueId, $date]);
-    
-    echo "<p>Raw SQL Results: " . count($rawResults) . " rows</p>";
-    echo "<pre>" . print_r($rawResults, true) . "</pre>";
-    echo "<hr>";
-    
-    // Test 2: Query Builder
-    echo "<h2>Test 2: Query Builder</h2>";
-    $qbResults = DB::table('jadwal')
-        ->where('venue_id', $venueId)
-        ->where('tanggal', $date)
-        ->get();
-    
-    echo "<p>Query Builder Results: " . $qbResults->count() . " rows</p>";
-    echo "<pre>" . print_r($qbResults->toArray(), true) . "</pre>";
-    echo "<hr>";
-    
-    // Test 3: Eloquent
-    echo "<h2>Test 3: Eloquent Model</h2>";
-    $eloquentResults = \App\Models\Jadwal::where('venue_id', $venueId)
-        ->where('tanggal', $date)
-        ->get();
-    
-    echo "<p>Eloquent Results: " . $eloquentResults->count() . " rows</p>";
-    echo "<pre>" . print_r($eloquentResults->toArray(), true) . "</pre>";
-    echo "<hr>";
-    
-    // Test 4: whereDate
-    echo "<h2>Test 4: whereDate</h2>";
-    $whereDateResults = \App\Models\Jadwal::where('venue_id', $venueId)
-        ->whereDate('tanggal', $date)
-        ->get();
-    
-    echo "<p>whereDate Results: " . $whereDateResults->count() . " rows</p>";
-    echo "<pre>" . print_r($whereDateResults->toArray(), true) . "</pre>";
-    echo "<hr>";
-    
-    // Test 5: Check tanggal format
-    echo "<h2>Test 5: Tanggal Format Check</h2>";
-    $allJadwal = DB::table('jadwal')
-        ->where('venue_id', $venueId)
-        ->select('id', 'tanggal', 'waktu_mulai', 'status')
-        ->get();
-    
-    echo "<p>All jadwal for venue {$venueId}: " . $allJadwal->count() . " rows</p>";
-    foreach ($allJadwal as $j) {
-        $match = $j->tanggal === $date ? '✅ MATCH' : '❌ NO MATCH';
-        echo "<p>ID {$j->id}: tanggal='{$j->tanggal}' vs '{$date}' → {$match}</p>";
-    }
-    echo "<hr>";
-    
-    // Test 6: Simulated Controller Query
-    echo "<h2>Test 6: Simulated Controller Query</h2>";
-    $controllerQuery = DB::table('jadwal')
-        ->where('venue_id', $venueId)
-        ->where('tanggal', $date)
-        ->where('status', 'Available')
-        ->where(function($query) {
-            $query->whereNull('locked_until')
-                  ->orWhere('locked_until', '<', now());
-        })
-        ->orderBy('waktu_mulai')
-        ->get();
-    
-    echo "<p>Controller Simulated Results: " . $controllerQuery->count() . " rows</p>";
-    echo "<pre>" . print_r($controllerQuery->toArray(), true) . "</pre>";
-    echo "<hr>";
-    
-    // Test 7: Check data types
-    echo "<h2>Test 7: Data Type Check</h2>";
-    $firstJadwal = DB::table('jadwal')
-        ->where('venue_id', $venueId)
-        ->first();
-    
-    if ($firstJadwal) {
-        echo "<p>First jadwal:</p>";
-        echo "<pre>";
-        echo "ID: " . var_export($firstJadwal->id, true) . "\n";
-        echo "Venue ID: " . var_export($firstJadwal->venue_id, true) . " (type: " . gettype($firstJadwal->venue_id) . ")\n";
-        echo "Tanggal: " . var_export($firstJadwal->tanggal, true) . " (type: " . gettype($firstJadwal->tanggal) . ")\n";
-        echo "Status: " . var_export($firstJadwal->status, true) . "\n";
-        echo "Locked Until: " . var_export($firstJadwal->locked_until, true) . "\n";
-        echo "</pre>";
-    }
-    
-    echo "<hr>";
-    echo "<h2>Summary</h2>";
-    echo "<p>Request Date: {$date} (type: " . gettype($date) . ")</p>";
-    echo "<p>Database Date: " . ($firstJadwal ? $firstJadwal->tanggal : 'N/A') . "</p>";
-    echo "<p>Match: " . ($firstJadwal && $firstJadwal->tanggal === $date ? 'YES' : 'NO') . "</p>";
-    
-})->middleware('auth');

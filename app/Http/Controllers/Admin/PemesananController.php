@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\BookingService;
 use App\Models\Pemesanan;
 use App\Models\Venue;
 use Illuminate\Http\Request;
@@ -16,7 +15,7 @@ class PemesananController extends Controller
         $query = Pemesanan::with('venue');
         
         // Filter berdasarkan pencarian
-        if ($request->has('search') && $request->search != '') {
+        if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
                 $q->where('nama_customer', 'like', '%' . $request->search . '%')
                   ->orWhere('booking_code', 'like', '%' . $request->search . '%')
@@ -24,27 +23,31 @@ class PemesananController extends Controller
             });
         }
         
-        // Filter berdasarkan status
-        if ($request->has('status') && $request->status != '') {
+        // Filter berdasarkan status — gunakan nilai DB yang benar (lowercase)
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
         
         // Filter berdasarkan venue
-        if ($request->has('venue_id') && $request->venue_id != '') {
+        if ($request->filled('venue_id')) {
             $query->where('venue_id', $request->venue_id);
         }
         
         $pemesanans = $query->orderBy('created_at', 'desc')->paginate(10);
         $venues = Venue::all();
         
-        // Statistik
+        // Statistik — semua venue (tanpa filter venue_id agar data admin lengkap)
         $totalPemesanans = Pemesanan::count();
-        $activePemesanans = Pemesanan::where('tanggal_booking', today())->where('status', 'Terkonfirmasi')->count();
-        $pendingPemesanans = Pemesanan::where('status', 'Menunggu')->count();
+        $activePemesanans = Pemesanan::whereDate('tanggal_booking', today())
+            ->where('status', Pemesanan::STATUS_CONFIRMED)
+            ->count();
+        $pendingPemesanans = Pemesanan::where('status', Pemesanan::STATUS_PENDING)->count();
         
-        // Hitung tingkat okupansi
-        $totalSlots = 8; // Asumsi 8 slot per hari
-        $bookedSlots = Pemesanan::where('tanggal_booking', today())->whereIn('status', ['Terkonfirmasi', 'Selesai'])->count();
+        // Hitung tingkat okupansi hari ini (semua venue)
+        $totalSlots = Venue::count() * 8; // 8 slot per venue per hari
+        $bookedSlots = Pemesanan::whereDate('tanggal_booking', today())
+            ->whereIn('status', [Pemesanan::STATUS_CONFIRMED, Pemesanan::STATUS_COMPLETED])
+            ->count();
         $occupancyRate = $totalSlots > 0 ? round(($bookedSlots / $totalSlots) * 100) : 0;
         
         return view('admin.pemesanan', compact(
@@ -77,57 +80,63 @@ class PemesananController extends Controller
     
     public function store(Request $request)
     {
-        $validasi = $request->validate([
-            'nama_customer' => 'required|string|max:255',
+        $request->validate([
+            'nama_customer'  => 'required|string|max:255',
             'customer_phone' => 'nullable|string|max:20',
-            'venue_id' => 'required|exists:venues,id',
-            'tanggal_booking' => 'required|date',
-            'waktu_booking' => 'required',
-            'end_time' => 'required',
-            'durasi' => 'required|integer|min:1',
-            'total_biaya' => 'required|numeric|min:0',
-            'status' => 'required|in:Menunggu,Terkonfirmasi,Selesai,Dibatalkan',
-            'catatan' => 'nullable|string'
+            'venue_id'       => 'required|exists:venues,id',
+            'tanggal_booking'=> 'required|date',
+            'waktu_booking'  => 'required',
+            'end_time'       => 'required',
+            'durasi'         => 'required|integer|min:1',
+            'total_biaya'    => 'required|numeric|min:0',
+            // ✅ FIX: Gunakan nilai status yang sesuai dengan DB constraint
+            'status'         => 'required|in:draft,pending,confirmed,expired,cancelled,completed',
+            'catatan'        => 'nullable|string',
         ]);
 
-        if (BookingService::isBentrok(
+        // Cek konflik jadwal (semua venue)
+        $bentrok = Pemesanan::hasConflict(
             $request->venue_id,
             $request->tanggal_booking,
             $request->waktu_booking,
             $request->end_time
-        )) {
+        );
+
+        if ($bentrok) {
             return back()
-                ->with('error', 'Jadwal bentrok dengan booking lain')
+                ->with('error', 'Jadwal bentrok dengan booking lain pada venue dan waktu yang sama.')
                 ->withInput();
         }
-        
 
         try {
             DB::beginTransaction();
 
-            // Generate kode booking
-            $pemesananTerakhir = Pemesanan::orderBy('id', 'desc')->first();
-            $idBerikutnya = $pemesananTerakhir ? $pemesananTerakhir->id + 1 : 1;
-            $kodeBooking = 'B' . str_pad($idBerikutnya, 4, '0', STR_PAD_LEFT);
+            // ✅ FIX: Gunakan generateBookingCode() dari Model (aman, cek duplikat)
+            $kodeBooking = Pemesanan::generateBookingCode();
 
             $pemesanan = Pemesanan::create([
-                'nama_customer' => $request->nama_customer,
+                'nama_customer'  => $request->nama_customer,
                 'customer_phone' => $request->customer_phone,
-                'venue_id' => $request->venue_id,
-                'tanggal_booking' => $request->tanggal_booking,
-                'waktu_booking' => $request->waktu_booking,
-                'end_time' => $request->end_time,
-                'durasi' => $request->durasi,
-                'total_biaya' => $request->total_biaya,
-                'status' => $request->status,
-                'catatan' => $request->catatan,
-                'booking_code' => $kodeBooking,
+                'venue_id'       => $request->venue_id,
+                'tanggal_booking'=> $request->tanggal_booking,
+                'waktu_booking'  => $request->waktu_booking,
+                'end_time'       => $request->end_time,
+                'durasi'         => $request->durasi,
+                'total_biaya'    => $request->total_biaya,
+                'status'         => $request->status,
+                'catatan'        => $request->catatan,
+                'booking_code'   => $kodeBooking,
             ]);
+
+            // Jika status confirmed, otomatis buat transaksi
+            if ($request->status === Pemesanan::STATUS_CONFIRMED) {
+                $this->buatTransaksiOtomatis($pemesanan);
+            }
 
             DB::commit();
 
-            return redirect()->route('pemesanan.index')
-                ->with('success', 'Pemesanan berhasil ditambahkan.');
+            return redirect()->route('admin.pemesanan.index')
+                ->with('success', 'Pemesanan berhasil ditambahkan dengan kode ' . $kodeBooking);
                 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -139,7 +148,7 @@ class PemesananController extends Controller
     
     public function edit($id)
     {
-        $pemesanan = Pemesanan::findOrFail($id);
+        $pemesanan = Pemesanan::with('venue')->findOrFail($id);
         $venues = Venue::all();
         return view('admin.pemesanan.edit', compact('pemesanan', 'venues'));
     }
@@ -148,48 +157,59 @@ class PemesananController extends Controller
     {
         $pemesanan = Pemesanan::findOrFail($id);
         
-        $validasi = $request->validate([
-            'nama_customer' => 'required|string|max:255',
+        $request->validate([
+            'nama_customer'  => 'required|string|max:255',
             'customer_phone' => 'nullable|string|max:20',
-            'venue_id' => 'required|exists:venues,id',
-            'tanggal_booking' => 'required|date',
-            'waktu_booking' => 'required',
-            'end_time' => 'required',
-            'durasi' => 'required|integer|min:1',
-            'total_biaya' => 'required|numeric|min:0',
-            'status' => 'required|in:Menunggu,Terkonfirmasi,Selesai,Dibatalkan',
-            'catatan' => 'nullable|string'
+            'venue_id'       => 'required|exists:venues,id',
+            'tanggal_booking'=> 'required|date',
+            'waktu_booking'  => 'required',
+            'end_time'       => 'required',
+            'durasi'         => 'required|integer|min:1',
+            'total_biaya'    => 'required|numeric|min:0',
+            // ✅ FIX: Nilai status konsisten dengan DB
+            'status'         => 'required|in:draft,pending,confirmed,expired,cancelled,completed',
+            'catatan'        => 'nullable|string',
         ]);
 
-        if (BookingService::isBentrok(
+        // Cek konflik jadwal, kecualikan booking ini sendiri
+        $bentrok = Pemesanan::hasConflict(
             $request->venue_id,
             $request->tanggal_booking,
             $request->waktu_booking,
             $request->end_time,
             $pemesanan->id
-        )) {
+        );
+
+        if ($bentrok) {
             return response()->json([
                 'success' => false,
-                'message' => 'Jadwal bentrok dengan booking lain'
+                'message' => 'Jadwal bentrok dengan booking lain pada venue dan waktu yang sama.'
             ], 422);
         }
-        
 
         try {
             DB::beginTransaction();
 
+            $statusLama = $pemesanan->status;
+
             $pemesanan->update([
-                'nama_customer' => $request->nama_customer,
+                'nama_customer'  => $request->nama_customer,
                 'customer_phone' => $request->customer_phone,
-                'venue_id' => $request->venue_id,
-                'tanggal_booking' => $request->tanggal_booking,
-                'waktu_booking' => $request->waktu_booking,
-                'end_time' => $request->end_time,
-                'durasi' => $request->durasi,
-                'total_biaya' => $request->total_biaya,
-                'status' => $request->status,
-                'catatan' => $request->catatan,
+                'venue_id'       => $request->venue_id,
+                'tanggal_booking'=> $request->tanggal_booking,
+                'waktu_booking'  => $request->waktu_booking,
+                'end_time'       => $request->end_time,
+                'durasi'         => $request->durasi,
+                'total_biaya'    => $request->total_biaya,
+                'status'         => $request->status,
+                'catatan'        => $request->catatan,
             ]);
+
+            // Jika status baru confirmed dan sebelumnya bukan confirmed, buat transaksi
+            if ($request->status === Pemesanan::STATUS_CONFIRMED 
+                && $statusLama !== Pemesanan::STATUS_CONFIRMED) {
+                $this->buatTransaksiOtomatis($pemesanan->fresh());
+            }
 
             DB::commit();
 
@@ -217,7 +237,7 @@ class PemesananController extends Controller
 
             DB::commit();
 
-            return redirect()->route('pemesanan.index')
+            return redirect()->route('admin.pemesanan.index')
                 ->with('success', 'Pemesanan berhasil dihapus.');
                 
         } catch (\Exception $e) {
@@ -233,7 +253,15 @@ class PemesananController extends Controller
             DB::beginTransaction();
 
             $pemesanan = Pemesanan::findOrFail($id);
-            $pemesanan->update(['status' => 'Terkonfirmasi']);
+            $statusLama = $pemesanan->status;
+
+            // ✅ FIX: Gunakan STATUS_CONFIRMED constant dari Model
+            $pemesanan->update(['status' => Pemesanan::STATUS_CONFIRMED]);
+
+            // Buat transaksi otomatis jika belum ada
+            if ($statusLama !== Pemesanan::STATUS_CONFIRMED) {
+                $this->buatTransaksiOtomatis($pemesanan->fresh());
+            }
 
             DB::commit();
 
@@ -253,7 +281,8 @@ class PemesananController extends Controller
             DB::beginTransaction();
 
             $pemesanan = Pemesanan::findOrFail($id);
-            $pemesanan->update(['status' => 'Dibatalkan']);
+            // ✅ FIX: Gunakan STATUS_CANCELLED constant
+            $pemesanan->update(['status' => Pemesanan::STATUS_CANCELLED]);
 
             DB::commit();
 
@@ -273,7 +302,8 @@ class PemesananController extends Controller
             DB::beginTransaction();
 
             $pemesanan = Pemesanan::findOrFail($id);
-            $pemesanan->update(['status' => 'Selesai']);
+            // ✅ FIX: Gunakan STATUS_COMPLETED constant
+            $pemesanan->update(['status' => Pemesanan::STATUS_COMPLETED]);
 
             DB::commit();
 
@@ -285,5 +315,40 @@ class PemesananController extends Controller
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Buat transaksi otomatis saat booking dikonfirmasi.
+     * Mencegah duplikasi jika transaksi sudah ada.
+     */
+    private function buatTransaksiOtomatis(Pemesanan $pemesanan): void
+    {
+        // Cek apakah transaksi sudah ada untuk booking ini
+        $sudahAda = DB::table('transactions')
+            ->where('booking_id', $pemesanan->id)
+            ->exists();
+
+        if ($sudahAda) {
+            return;
+        }
+
+        // Generate transaction number unik
+        do {
+            $transactionNumber = 'TRX-' . strtoupper(\Illuminate\Support\Str::random(10));
+        } while (DB::table('transactions')->where('transaction_number', $transactionNumber)->exists());
+
+        DB::table('transactions')->insert([
+            'transaction_number'  => $transactionNumber,
+            'booking_id'          => $pemesanan->id,
+            'customer_id'         => $pemesanan->user_id,
+            'pengguna'            => $pemesanan->nama_customer,
+            'nama_venue'          => $pemesanan->venue?->name ?? '-',
+            'metode_pembayaran'   => $pemesanan->payment_method ?? 'cash',
+            'amount'              => $pemesanan->total_biaya,
+            'transaction_date'    => now(),
+            'status'              => 'completed',
+            'created_at'          => now(),
+            'updated_at'          => now(),
+        ]);
     }
 }

@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use Excel;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\AdminReportExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -115,9 +115,12 @@ class LaporanController extends Controller
                 'booking.durasi',
                 'booking.catatan',
                 DB::raw("CASE 
-                    WHEN booking.status = 'Terkonfirmasi' THEN 'selesai'
-                    WHEN booking.status = 'Menunggu' THEN 'pending'
-                    WHEN booking.status = 'Dibatalkan' THEN 'dibatalkan'
+                    WHEN booking.status = 'confirmed' THEN 'selesai'
+                    WHEN booking.status = 'completed' THEN 'selesai'
+                    WHEN booking.status = 'pending' THEN 'pending'
+                    WHEN booking.status = 'draft' THEN 'pending'
+                    WHEN booking.status = 'cancelled' THEN 'dibatalkan'
+                    WHEN booking.status = 'expired' THEN 'dibatalkan'
                     ELSE booking.status 
                 END as status"),
                 'booking.created_at',
@@ -158,10 +161,10 @@ class LaporanController extends Controller
         if ($request->filled('status') && $request->status != '') {
             $status = $request->status;
             
-            // Mapping status untuk booking
-            $bookingStatus = $this->mapStatusToBooking($status);
-            if ($bookingStatus) {
-                $bookingQuery->where('booking.status', $bookingStatus);
+            // Mapping status untuk booking (array)
+            $bookingStatuses = $this->mapStatusToBooking($status);
+            if ($bookingStatuses) {
+                $bookingQuery->whereIn('booking.status', $bookingStatuses);
             }
             
             // Mapping status untuk transactions
@@ -183,8 +186,8 @@ class LaporanController extends Controller
             
             switch ($jenisLaporan) {
                 case 'pendapatan':
-                    $bookingQuery->where('booking.status', 'Terkonfirmasi');
-                    $transactionQuery->whereIn('transactions.status', ['completed', 'selesai']);
+                    $bookingQuery->whereIn('booking.status', ['confirmed', 'completed']);
+                    $transactionQuery->whereIn('transactions.status', ['completed', 'paid']);
                     Log::debug('getCombinedData - Filter jenis: pendapatan');
                     break;
                 case 'venue':
@@ -232,9 +235,9 @@ class LaporanController extends Controller
         
         if ($request->filled('status') && $request->status != '') {
             $status = $request->status;
-            $bookingStatus = $this->mapStatusToBooking($status);
-            if ($bookingStatus) {
-                $bookingCountQuery->where('status', $bookingStatus);
+            $bookingStatuses = $this->mapStatusToBooking($status);
+            if ($bookingStatuses) {
+                $bookingCountQuery->whereIn('status', $bookingStatuses);
             }
         }
         
@@ -269,9 +272,9 @@ class LaporanController extends Controller
     {
         Log::debug('getTotalPendapatan - Mulai menghitung total pendapatan');
         
-        // Pendapatan dari booking (status Terkonfirmasi)
+        // Pendapatan dari booking (status confirmed dan completed)
         $bookingRevenueQuery = DB::table('booking')
-            ->where('status', 'Terkonfirmasi');
+            ->whereIn('status', ['confirmed', 'completed']);
         $this->applyPeriodFilter($bookingRevenueQuery, $request, 'tanggal_booking');
         
         // Filter status untuk booking
@@ -353,9 +356,9 @@ class LaporanController extends Controller
         
         if ($request->filled('status') && $request->status != '') {
             $status = $request->status;
-            $bookingStatus = $this->mapStatusToBooking($status);
-            if ($bookingStatus) {
-                $venuePopularity->where('booking.status', $bookingStatus);
+            $bookingStatuses = $this->mapStatusToBooking($status);
+            if ($bookingStatuses) {
+                $venuePopularity->whereIn('booking.status', $bookingStatuses);
             }
         }
         
@@ -389,13 +392,13 @@ class LaporanController extends Controller
         $currentYear = Carbon::now()->year;
         $monthlyRevenue = array_fill(0, 12, 0);
         
-        // Data dari booking (status Terkonfirmasi)
+        // Data dari booking (status confirmed dan completed)
         $bookingRevenue = DB::table('booking')
             ->select(
                 DB::raw('EXTRACT(MONTH FROM tanggal_booking) as month'),
                 DB::raw('SUM(total_biaya) as total')
             )
-            ->where('status', 'Terkonfirmasi')
+            ->whereIn('status', ['confirmed', 'completed'])
             ->whereYear('tanggal_booking', $currentYear)
             ->groupBy(DB::raw('EXTRACT(MONTH FROM tanggal_booking)'))
             ->orderBy('month')
@@ -596,19 +599,20 @@ class LaporanController extends Controller
      */
     private function mapStatusToBooking($status)
     {
+        // ✅ FIX: Map ke nilai DB yang benar (lowercase, English)
         $statusMap = [
-            'selesai' => 'Terkonfirmasi',
-            'pending' => 'Menunggu',
-            'dibatalkan' => 'Dibatalkan'
+            'selesai'    => ['confirmed', 'completed'],
+            'pending'    => ['pending', 'draft'],
+            'dibatalkan' => ['cancelled', 'expired']
         ];
         
         $mapped = $statusMap[$status] ?? null;
         Log::debug('mapStatusToBooking - Mapping:', [
-            'input' => $status,
+            'input'  => $status,
             'output' => $mapped
         ]);
         
-        return $mapped;
+        return $mapped; // sekarang berupa array atau null
     }
     
     /**
@@ -636,16 +640,19 @@ class LaporanController extends Controller
      */
     private function mapBookingStatusLabel($status)
     {
+        // ✅ FIX: Sesuai dengan nilai status DB yang benar
         $labelMap = [
-            'Menunggu' => 'Pending',
-            'Terkonfirmasi' => 'Selesai',
-            'Dibatalkan' => 'Dibatalkan',
-            'Selesai' => 'Selesai'
+            'pending'   => 'Menunggu',
+            'draft'     => 'Draft',
+            'confirmed' => 'Terkonfirmasi',
+            'completed' => 'Selesai',
+            'cancelled' => 'Dibatalkan',
+            'expired'   => 'Kadaluarsa',
         ];
         
-        $mapped = $labelMap[$status] ?? $status;
+        $mapped = $labelMap[$status] ?? ucfirst($status);
         Log::debug('mapBookingStatusLabel - Mapping:', [
-            'input' => $status,
+            'input'  => $status,
             'output' => $mapped
         ]);
         
@@ -673,9 +680,12 @@ class LaporanController extends Controller
                     'booking.durasi',
                     'booking.catatan',
                     DB::raw("CASE 
-                        WHEN booking.status = 'Terkonfirmasi' THEN 'selesai'
-                        WHEN booking.status = 'Menunggu' THEN 'pending'
-                        WHEN booking.status = 'Dibatalkan' THEN 'dibatalkan'
+                        WHEN booking.status = 'confirmed' THEN 'selesai'
+                        WHEN booking.status = 'completed' THEN 'selesai'
+                        WHEN booking.status = 'pending' THEN 'pending'
+                        WHEN booking.status = 'draft' THEN 'pending'
+                        WHEN booking.status = 'cancelled' THEN 'dibatalkan'
+                        WHEN booking.status = 'expired' THEN 'dibatalkan'
                         ELSE booking.status 
                     END as status"),
                     'booking.created_at'
@@ -1033,7 +1043,7 @@ class LaporanController extends Controller
             
             // Revenue dari booking
             $revenueBooking = DB::table('booking')
-                ->where('status', 'Terkonfirmasi')
+                ->whereIn('status', ['confirmed', 'completed'])
                 ->whereDate('tanggal_booking', $dateStr)
                 ->sum('total_biaya');
             
