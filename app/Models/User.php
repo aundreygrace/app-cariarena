@@ -6,7 +6,6 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -32,46 +31,34 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'social_media' => 'array',
+        'social_media'      => 'array',
     ];
 
     /**
-     * ✅ FIXED: GET PROFILE PHOTO URL — support Supabase S3 & local
+     * Generate Supabase public URL langsung — TANPA koneksi S3.
+     * Bucket profile-photos bersifat Public sehingga URL bisa di-generate
+     * secara statik tanpa perlu credentials AWS/Supabase sama sekali.
      */
-    public function getProfilePhotoUrlAttribute()
+    public function getProfilePhotoUrlAttribute(): ?string
     {
-        if (!$this->profile_photo) {
+        if (empty($this->profile_photo)) {
             return null;
         }
 
-        $isOwner = $this->hasRole('owner');
-        $roleFolder = $isOwner ? 'owners' : 'users';
-        $path = "profile-photos/{$roleFolder}/{$this->id}/{$this->profile_photo}";
+        // Supabase project URL (hardcoded fallback jika env belum di-set)
+        $supabaseUrl = rtrim(
+            config('services.supabase.url', env('SUPABASE_URL', 'https://tyxxjuqqtpezebmwqhug.supabase.co')),
+            '/'
+        );
 
-        $disk = config('filesystems.default');
-
-        // Jika pakai S3/Supabase
-        if ($disk === 's3') {
-            return Storage::disk('s3')->url($path);
-        }
-
-        // Local: cek apakah file ada
-        if (Storage::disk('public')->exists($path)) {
-            return asset("storage/{$path}");
-        }
-
-        // Fallback: cek lokasi lama (backward compatibility)
-        $oldPath = "profile-photos/{$this->profile_photo}";
-        if (Storage::disk('public')->exists($oldPath)) {
-            return asset("storage/{$oldPath}");
-        }
-
-        return null;
+        // File lama tersimpan langsung di profile-photos/{filename}
+        // Format URL public Supabase: /storage/v1/object/public/{bucket}/{path}
+        return "{$supabaseUrl}/storage/v1/object/public/profile-photos/{$this->profile_photo}";
     }
 
-    public function getHasProfilePhotoAttribute()
+    public function getHasProfilePhotoAttribute(): bool
     {
-        return !is_null($this->profile_photo_url);
+        return !empty($this->profile_photo);
     }
 
     public function venues()
@@ -84,22 +71,22 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->venues()->first();
     }
 
-    public function getRoleAttribute()
+    public function getRoleAttribute(): string
     {
         return $this->roles->first()->name ?? 'user';
     }
 
-    public function isAdmin()
+    public function isAdmin(): bool
     {
         return $this->hasRole('admin');
     }
 
-    public function isVenue()
+    public function isVenue(): bool
     {
         return $this->hasRole('owner');
     }
 
-    public function isUser()
+    public function isUser(): bool
     {
         return $this->hasRole('user') || $this->roles->isEmpty();
     }
