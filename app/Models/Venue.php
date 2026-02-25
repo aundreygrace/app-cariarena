@@ -183,19 +183,31 @@ class Venue extends Model
             return $this->photo;
         }
 
+        $photo = $this->photo;
+
+        // Normalisasi path:
+        // "venue/GRIYAFUTSAL.png"  -> "GRIYAFUTSAL.png"
+        // "venues/GRIYAFUTSAL.png" -> "GRIYAFUTSAL.png"
+        // "FATHKIFUTSAL.png"       -> "FATHKIFUTSAL.png" (tidak berubah)
+        $photo = preg_replace('#^venues?/#i', '', $photo);
+
+        // Jika tidak punya ekstensi (data kotor seperti "lapfutsalsda"), return default
+        if (!str_contains($photo, '.')) {
+            return $this->getDefaultPhotoUrl();
+        }
+
         $disk = config('filesystems.default');
 
-        // Jika pakai S3/Supabase
+        // Jika pakai S3/Supabase — semua file ada di root bucket "venues"
         if ($disk === 's3') {
-            return Storage::disk('s3')->url($this->photo);
+            return Storage::disk('s3')->url($photo);
         }
 
-        // Local: cek apakah file ada di storage public
-        if (Storage::disk('public')->exists($this->photo)) {
-            return asset('storage/' . $this->photo);
+        // Local
+        if (Storage::disk('public')->exists('venues/' . $photo)) {
+            return asset('storage/venues/' . $photo);
         }
 
-        // Fallback ke default image
         return $this->getDefaultPhotoUrl();
     }
 
