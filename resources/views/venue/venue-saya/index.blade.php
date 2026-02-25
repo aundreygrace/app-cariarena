@@ -18,7 +18,7 @@
         @forelse($venues as $venue)
             <div class="venue-item">
                 <div class="venue-card card position-relative" data-venue-id="{{ $venue->id }}">
-                    <img src="{{ $venue->photo ? (Str::contains($venue->photo, ['http', 'drive.google.com']) ? $venue->photo : asset('storage/' . $venue->photo)) : 'https://source.unsplash.com/400x200/?sports' }}" alt="{{ $venue->name }}">
+                    <img src="{{ $venue->photo_url }}" alt="{{ $venue->name }}">
                     <span class="badge-status 
                         @if($venue->status === 'Aktif') badge-aktif
                         @elseif($venue->status === 'Maintenance') badge-maintenance

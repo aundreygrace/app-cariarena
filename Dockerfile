@@ -29,15 +29,11 @@ COPY . .
 # Install dependencies PHP
 RUN composer install --optimize-autoloader --no-dev
 
-# Jangan cache config agar Laravel baca env runtime dari Railway
-# RUN php artisan config:cache
-# RUN php artisan route:cache
-# RUN php artisan view:cache
+# Set permissions
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage
 
-# Expose port yang akan digunakan Railway
 EXPOSE ${PORT}
-RUN php artisan storage:link || true
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT}
 
-# Jalankan Laravel di port dari Railway
-CMD php artisan serve --host=0.0.0.0 --port=${PORT}
+# ✅ Hanya 1 CMD — storage:link tidak diperlukan karena pakai Supabase S3
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT}

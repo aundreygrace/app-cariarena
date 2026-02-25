@@ -36,8 +36,7 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
-     * ✅ GET PROFILE PHOTO URL (Role-based)
-     * No need for helper!
+     * ✅ FIXED: GET PROFILE PHOTO URL — support Supabase S3 & local
      */
     public function getProfilePhotoUrlAttribute()
     {
@@ -45,30 +44,31 @@ class User extends Authenticatable implements MustVerifyEmail
             return null;
         }
 
-        // Determine role folder
         $isOwner = $this->hasRole('owner');
         $roleFolder = $isOwner ? 'owners' : 'users';
-        
-        // Build path: storage/profile-photos/{role}/{user_id}/{filename}
         $path = "profile-photos/{$roleFolder}/{$this->id}/{$this->profile_photo}";
-        
-        // Check if file exists in role-based folder
+
+        $disk = config('filesystems.default');
+
+        // Jika pakai S3/Supabase
+        if ($disk === 's3') {
+            return Storage::disk('s3')->url($path);
+        }
+
+        // Local: cek apakah file ada
         if (Storage::disk('public')->exists($path)) {
             return asset("storage/{$path}");
         }
-        
-        // Fallback: check old location (backward compatibility)
+
+        // Fallback: cek lokasi lama (backward compatibility)
         $oldPath = "profile-photos/{$this->profile_photo}";
         if (Storage::disk('public')->exists($oldPath)) {
             return asset("storage/{$oldPath}");
         }
-        
+
         return null;
     }
 
-    /**
-     * Check if user has profile photo
-     */
     public function getHasProfilePhotoAttribute()
     {
         return !is_null($this->profile_photo_url);

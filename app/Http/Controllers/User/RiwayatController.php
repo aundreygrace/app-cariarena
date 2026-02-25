@@ -246,15 +246,9 @@ class RiwayatController extends Controller
      */
     private function getVenueImageUrl($venue)
     {
-        if (empty($venue->photo)) {
-            return asset('images/default-venue.jpg');
-        }
-
-        if (file_exists(public_path('storage/' . $venue->photo))) {
-            return asset('storage/' . $venue->photo);
-        }
-
-        return asset($venue->photo);
+        // ✅ Gunakan accessor photo_url dari model Venue
+        // Otomatis handle S3 (Supabase), local, URL eksternal, dan default image
+        return $venue->photo_url;
     }
     
     /**
