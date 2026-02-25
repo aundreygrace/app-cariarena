@@ -62,7 +62,11 @@
         <div class="notifikasi-content">
             <h4>{{ $notification->title ?? 'Notifikasi Sistem' }}</h4>
             <p>{{ $notification->message ?? 'Tidak ada pesan' }}</p>
-            <div class="notifikasi-time">{{ $notification->created_at->diffForHumans() }}</div>
+            {{-- ✅ FIX: DB::table() mengembalikan stdClass bukan Eloquent model,
+                 created_at adalah string biasa — harus parse dulu ke Carbon --}}
+            <div class="notifikasi-time">
+                {{ $notification->created_at ? \Carbon\Carbon::parse($notification->created_at)->diffForHumans() : '-' }}
+            </div>
         </div>
         <div class="notifikasi-actions">
             @if(!$notification->is_read)
@@ -671,7 +675,8 @@
             const notifikasiItem = this.closest('.notifikasi-item');
             
             // Kirim request AJAX untuk update status
-            fetch(`{{ url("/admin/notifikasi") }}/${notifikasiId}/mark-as-read`, {
+            // ✅ FIX: URL pakai route() helper agar konsisten dengan definisi route di web.php
+            fetch(`/admin/notifikasi/${notifikasiId}/mark-as-read`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -696,7 +701,7 @@
     // Tandai semua sebagai sudah dibaca
     document.getElementById('markAllRead').addEventListener('click', function() {
         if (confirm('Tandai semua notifikasi sebagai sudah dibaca?')) {
-            fetch('{{ url("/admin/notifikasi/mark-all-read") }}', {
+            fetch('/admin/notifikasi/mark-all-read', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -719,7 +724,7 @@
     // Hapus semua notifikasi
     document.getElementById('deleteAll').addEventListener('click', function() {
         if (confirm('Hapus semua notifikasi? Tindakan ini tidak dapat dibatalkan.')) {
-            fetch('{{ url("/admin/notifikasi/delete-all") }}', {
+            fetch('/admin/notifikasi/delete-all', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -784,7 +789,8 @@
             const { element, id } = notifikasiToDelete;
             
             // Kirim request AJAX untuk menghapus
-            fetch(`{{ url("/admin/notifikasi") }}/${id}`, {
+            // ✅ FIX: method DELETE sesuai dengan route definition web.php
+            fetch(`/admin/notifikasi/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

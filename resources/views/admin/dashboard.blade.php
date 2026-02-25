@@ -57,31 +57,22 @@
                             @forelse($pemesananTerbaru as $pemesanan)
                             <div class="booking-item">
                                 <div class="booking-info">
-                                    <strong>
-                                        @if(isset($pemesanan->nama_customer))
-                                            {{ $pemesanan->nama_customer }}
-                                        @else
-                                            Customer
-                                        @endif
-                                    </strong>
+                                    <strong>{{ $pemesanan->nama_customer ?? 'Customer' }}</strong>
                                     <p>
-                                        @if(isset($pemesanan->venue->name))
-                                            {{ $pemesanan->venue->name }}
-                                        @else
-                                            Venue #{{ $pemesanan->venue_id ?? 'N/A' }}
-                                        @endif
-                                        — 
-                                        @if(isset($pemesanan->tanggal_booking))
+                                        {{-- ✅ FIX: akses via relasi Eloquent yang sudah eager loaded --}}
+                                        {{ $pemesanan->venue->name ?? ('Venue #' . ($pemesanan->venue_id ?? 'N/A')) }}
+                                        —
+                                        @if($pemesanan->tanggal_booking)
                                             {{ \Carbon\Carbon::parse($pemesanan->tanggal_booking)->format('d M Y') }}
-                                            @if(isset($pemesanan->waktu_booking))
+                                            @if($pemesanan->waktu_booking)
                                                 {{ \Carbon\Carbon::parse($pemesanan->waktu_booking)->format('H:i') }}
                                             @endif
                                         @else
                                             N/A
                                         @endif
-                                        @if(isset($pemesanan->end_time))
+                                        @if($pemesanan->end_time)
                                             – {{ \Carbon\Carbon::parse($pemesanan->end_time)->format('H:i') }}
-                                        @elseif(isset($pemesanan->durasi))
+                                        @elseif($pemesanan->waktu_booking && $pemesanan->durasi)
                                             – {{ \Carbon\Carbon::parse($pemesanan->waktu_booking)->addHours($pemesanan->durasi)->format('H:i') }}
                                         @endif
                                     </p>
@@ -92,21 +83,28 @@
                                     @else
                                         <strong>-</strong>
                                     @endif
-                                    <div class="status {{ in_array($pemesanan->status, ['confirmed', 'terkonfirmasi', 'selesai', 'Terkonfirmasi', 'completed']) ? 'confirmed' : 
-                                                         (in_array($pemesanan->status, ['pending', 'menunggu', 'Menunggu']) ? 'pending' : 
-                                                         ($pemesanan->status == 'dibatalkan' ? 'cancelled' : 'pending')) }}">
-                                        @if($pemesanan->status == 'confirmed' || $pemesanan->status == 'terkonfirmasi' || $pemesanan->status == 'Terkonfirmasi' || $pemesanan->status == 'completed')
-                                            Terkonfirmasi
-                                        @elseif($pemesanan->status == 'pending' || $pemesanan->status == 'menunggu' || $pemesanan->status == 'Menunggu')
-                                            Menunggu
-                                        @elseif($pemesanan->status == 'selesai')
-                                            Selesai
-                                        @elseif($pemesanan->status == 'dibatalkan')
-                                            Dibatalkan
-                                        @else
-                                            {{ $pemesanan->status ?? 'Unknown' }}
-                                        @endif
-                                    </div>
+                                    {{-- ✅ FIX: Status sesuai DB constraint booking:
+                                         draft/pending/confirmed/expired/cancelled/completed
+                                         Sebelumnya cek 'Menunggu','Terkonfirmasi','dibatalkan' yang tidak ada di DB --}}
+                                    @php
+                                        $st = $pemesanan->status ?? '';
+                                        $stClass = match($st) {
+                                            'confirmed', 'completed' => 'confirmed',
+                                            'pending',   'draft'     => 'pending',
+                                            'cancelled', 'expired'   => 'cancelled',
+                                            default                  => 'pending',
+                                        };
+                                        $stLabel = match($st) {
+                                            'confirmed' => 'Terkonfirmasi',
+                                            'completed' => 'Selesai',
+                                            'pending'   => 'Menunggu',
+                                            'draft'     => 'Draft',
+                                            'cancelled' => 'Dibatalkan',
+                                            'expired'   => 'Kadaluarsa',
+                                            default     => ucfirst($st),
+                                        };
+                                    @endphp
+                                    <div class="status {{ $stClass }}">{{ $stLabel }}</div>
                                 </div>
                             </div>
                             @empty
@@ -203,7 +201,11 @@
                                 <div class="flex-grow-1 ms-2">
                                     <h6 class="mb-1">{{ $notification->title ?? 'Notifikasi Sistem' }}</h6>
                                     <p class="mb-0 text-muted small">{{ $notification->message ?? 'Tidak ada pesan' }}</p>
-                                    <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
+                                    {{-- ✅ FIX: DB::table() mengembalikan stdClass, bukan Eloquent model
+                                         Tidak punya method diffForHumans() — pakai Carbon::parse() dulu --}}
+                                    <small class="text-muted">
+                                        {{ $notification->created_at ? \Carbon\Carbon::parse($notification->created_at)->diffForHumans() : '-' }}
+                                    </small>
                                 </div>
                             </div>
                             @empty

@@ -232,6 +232,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', RoleMiddleware::clas
     // Dashboard Routes
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('dashboard/notifikasi', [AdminDashboardController::class, 'notifikasi'])->name('dashboard.notifikasi');
+
+    // ✅ FIX: Tambah route CRUD notifikasi admin yang sebelumnya HILANG
+    //   Blade pakai URL /admin/notifikasi/* untuk AJAX, tapi route tidak ada → semua AJAX 404
+    Route::prefix('notifikasi')->name('notifikasi.')->group(function () {
+        Route::post('/{id}/mark-as-read', [AdminDashboardController::class, 'markAsRead'])->name('markAsRead');
+        Route::post('/mark-all-read',     [AdminDashboardController::class, 'markAllAsRead'])->name('markAllAsRead');
+        Route::post('/delete-all',        [AdminDashboardController::class, 'destroyAll'])->name('deleteAll');
+        Route::delete('/{id}',            [AdminDashboardController::class, 'destroyNotifikasi'])->name('destroy');
+    });
     Route::get('/catatan-aktivitas', [AdminDashboardController::class, 'catatanAktivitas'])->name('catatan-aktivitas.index');
     Route::get('/jadwal-lapangan', [AdminDashboardController::class, 'jadwalLapangan'])->name('jadwal-lapangan.index');
 
