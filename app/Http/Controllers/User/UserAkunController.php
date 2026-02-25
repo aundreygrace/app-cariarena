@@ -30,7 +30,12 @@ class UserAkunController extends Controller
 
         // Supabase public URL format for public buckets
         $supabaseUrl = rtrim(env('SUPABASE_URL', 'https://tyxxjuqqtpezebmwqhug.supabase.co'), '/');
-        return $supabaseUrl . '/storage/v1/object/public/profile-photos/' . $filename;
+        // Folder sesuai role: owners/ atau users/
+        // Tapi helper ini dipanggil sebelum cek role — pakai accessor di model saja
+        // Fallback: cek dari user yang sedang login
+        $user = auth()->user();
+        $folder = ($user && $user->hasRole('owner')) ? 'owners' : 'users';
+        return $supabaseUrl . '/storage/v1/object/public/profile-photos/' . $folder . '/' . $filename;
     }
 
     public function index(Request $request)
@@ -138,7 +143,8 @@ class UserAkunController extends Controller
                 // Delete old photo from Supabase S3 if exists
                 if ($user->profile_photo) {
                     try {
-                        Storage::disk('s3')->delete('profile-photos/' . $user->profile_photo);
+                        $folder = $user->hasRole('owner') ? 'owners' : 'users';
+                        Storage::disk('profile_photos')->delete($folder . '/' . $user->profile_photo);
                     } catch (\Exception $e) {
                         // Log but don't fail if old photo deletion fails
                         \Log::warning('Failed to delete old profile photo: ' . $e->getMessage());
@@ -149,7 +155,8 @@ class UserAkunController extends Controller
                 $filename = time() . '_' . uniqid() . '.' . $photo->getClientOriginalExtension();
 
                 // Upload to Supabase S3
-                Storage::disk('s3')->putFileAs('profile-photos', $photo, $filename, 'public');
+                $folder = $user->hasRole('owner') ? 'owners' : 'users';
+                Storage::disk('profile_photos')->putFileAs($folder, $photo, $filename, 'public');
 
                 $user->profile_photo = $filename;
             }
@@ -158,7 +165,8 @@ class UserAkunController extends Controller
             if ($request->has('remove_photo') && $request->remove_photo == '1') {
                 if ($user->profile_photo) {
                     try {
-                        Storage::disk('s3')->delete('profile-photos/' . $user->profile_photo);
+                        $folder = $user->hasRole('owner') ? 'owners' : 'users';
+                        Storage::disk('profile_photos')->delete($folder . '/' . $user->profile_photo);
                     } catch (\Exception $e) {
                         \Log::warning('Failed to delete profile photo: ' . $e->getMessage());
                     }

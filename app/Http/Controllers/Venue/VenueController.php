@@ -15,36 +15,33 @@ class VenueController extends Controller
     {
         $user = Auth::user();
         $venues = Venue::where('user_id', $user->id)->get();
-        
-        // Get primary venue for profile display
+
         $primaryVenue = $user->getPrimaryVenue();
         $profileName = $primaryVenue ? $primaryVenue->name : $user->venue_name ?? 'Venue Owner';
-        
+
         return view('venue.venue-saya.index', compact('venues', 'profileName'));
     }
 
     public function show($id)
-{
-    // PERBAIKAN: Gunakan Auth::id() bukan auth('venue')->id()
-    $venue = Venue::where('user_id', Auth::id())
-                  ->with(['jadwals' => function($query) {
-                      $query->select('venue_id', 'tanggal', 'waktu_mulai', 'waktu_selesai', 'status')
-                            ->where('tanggal', '>=', now()->format('Y-m-d'));
-                  }])
-                  ->findOrFail($id);
-    
-    // Format data jadwal untuk JavaScript
-    $jadwalData = $venue->jadwals->map(function($jadwal) {
-        return [
-            'date' => $jadwal->tanggal,
-            'start_time' => $jadwal->waktu_mulai,
-            'end_time' => $jadwal->waktu_selesai,
-            'status' => $jadwal->status
-        ];
-    });
-    
-    return view('venue.venue-saya.lihat-detail-venue', compact('venue', 'jadwalData'));
-}
+    {
+        $venue = Venue::where('user_id', Auth::id())
+            ->with(['jadwals' => function ($query) {
+                $query->select('venue_id', 'tanggal', 'waktu_mulai', 'waktu_selesai', 'status')
+                    ->where('tanggal', '>=', now()->format('Y-m-d'));
+            }])
+            ->findOrFail($id);
+
+        $jadwalData = $venue->jadwals->map(function ($jadwal) {
+            return [
+                'date'       => $jadwal->tanggal,
+                'start_time' => $jadwal->waktu_mulai,
+                'end_time'   => $jadwal->waktu_selesai,
+                'status'     => $jadwal->status,
+            ];
+        });
+
+        return view('venue.venue-saya.lihat-detail-venue', compact('venue', 'jadwalData'));
+    }
 
     public function edit($id)
     {
@@ -55,52 +52,53 @@ class VenueController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'category' => 'required|string|in:Futsal,Badminton,Basket,Soccer',
-            'address' => 'required|string',
-            'price_per_hour' => 'required',
-            'status' => 'required|in:Aktif,Maintenance,Tidak Aktif',
-            'photo' => 'nullable|file|image|max:4096',
-            'photo_link' => 'nullable|string|url',
+            'name'          => 'required|string|max:100',
+            'category'      => 'required|string|in:Futsal,Badminton,Basket,Soccer',
+            'address'       => 'required|string',
+            'price_per_hour'=> 'required',
+            'status'        => 'required|in:Aktif,Maintenance,Tidak Aktif',
+            'photo'         => 'nullable|file|image|max:4096',
+            'photo_link'    => 'nullable|string|url',
         ]);
 
-        // Convert price to integer (remove dots and commas)
+        // Convert price to integer
         $price = $request->price_per_hour;
         if (is_string($price)) {
             $price = preg_replace('/[^\d]/', '', $price);
         }
         $validated['price_per_hour'] = (int) $price;
 
-        // Validate price is positive
         if ($validated['price_per_hour'] <= 0) {
             return back()->withErrors(['price_per_hour' => 'Harga per jam harus lebih dari 0'])->withInput();
         }
 
-        // Handle photo upload atau link
+        // ✅ Upload ke Supabase S3
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('venues', 'public');
-            $validated['photo'] = $path;
+            $photo    = $request->file('photo');
+            $filename = time() . '_' . uniqid() . '.' . $photo->getClientOriginalExtension();
+            Storage::disk('venues_storage')->putFileAs('', $photo, $filename, 'public');
+            $validated['photo'] = $filename;
         } elseif ($request->photo_link) {
             $validated['photo'] = $request->photo_link;
         } else {
             $validated['photo'] = null;
         }
 
-        // Handle facilities dari checkbox
+        // Facilities dari checkbox
         $facilities = [];
-        if ($request->newFacilityParking) $facilities[] = 'Parkir';
-        if ($request->newFacilityToilet) $facilities[] = 'Toilet';
-        if ($request->newFacilityKantin) $facilities[] = 'Kantin';
-        if ($request->newFacilityAC) $facilities[] = 'AC';
-        if ($request->newFacilityMusholla) $facilities[] = 'Musholla';
+        if ($request->newFacilityParking)    $facilities[] = 'Parkir';
+        if ($request->newFacilityToilet)     $facilities[] = 'Toilet';
+        if ($request->newFacilityKantin)     $facilities[] = 'Kantin';
+        if ($request->newFacilityAC)         $facilities[] = 'AC';
+        if ($request->newFacilityMusholla)   $facilities[] = 'Musholla';
         if ($request->newFacilityRuangGanti) $facilities[] = 'Ruang Ganti';
-        if ($request->newFacilityRuangTunggu) $facilities[] = 'Ruang Tunggu/Tribun';
-        if ($request->newFacilitySoundSystem) $facilities[] = 'Sound System';
+        if ($request->newFacilityRuangTunggu)$facilities[] = 'Ruang Tunggu/Tribun';
+        if ($request->newFacilitySoundSystem)$facilities[] = 'Sound System';
 
-        $validated['facilities'] = $facilities;
-        $validated['user_id'] = Auth::id();
-        $validated['rating'] = 0;
-        $validated['reviews_count'] = 0;
+        $validated['facilities']     = $facilities;
+        $validated['user_id']        = Auth::id();
+        $validated['rating']         = 0;
+        $validated['reviews_count']  = 0;
 
         Venue::create($validated);
 
@@ -112,56 +110,67 @@ class VenueController extends Controller
         $venue = Venue::where('user_id', Auth::id())->findOrFail($id);
 
         $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'category' => 'required|string|in:Futsal,Badminton,Basket,Soccer',
-            'address' => 'required|string',
-            'price_per_hour' => 'required',
-            'status' => 'required|in:Aktif,Maintenance,Tidak Aktif',
-            'photo' => 'nullable|file|image|max:4096',
-            'photo_link' => 'nullable|string|url',
+            'name'          => 'required|string|max:100',
+            'category'      => 'required|string|in:Futsal,Badminton,Basket,Soccer',
+            'address'       => 'required|string',
+            'price_per_hour'=> 'required',
+            'status'        => 'required|in:Aktif,Maintenance,Tidak Aktif',
+            'photo'         => 'nullable|file|image|max:4096',
+            'photo_link'    => 'nullable|string|url',
         ]);
 
-        // Convert price to integer (remove dots and commas)
+        // Convert price to integer
         $price = $request->price_per_hour;
         if (is_string($price)) {
             $price = preg_replace('/[^\d]/', '', $price);
         }
         $validated['price_per_hour'] = (int) $price;
 
-        // Validate price is positive
         if ($validated['price_per_hour'] <= 0) {
             return back()->withErrors(['price_per_hour' => 'Harga per jam harus lebih dari 0'])->withInput();
         }
 
-        // Handle photo upload atau link
+        // ✅ Upload ke Supabase S3
         if ($request->hasFile('photo')) {
-            // Delete old photo if exists
-            if ($venue->photo && !Str::contains($venue->photo, ['http', 'drive.google.com'])) {
-                Storage::disk('public')->delete($venue->photo);
+            // Hapus foto lama dari S3 jika bukan URL eksternal
+            if ($venue->photo && !Str::startsWith($venue->photo, 'http')) {
+                try {
+                    Storage::disk('venues_storage')->delete($venue->photo);
+                } catch (\Exception $e) {
+                    \Log::warning('Gagal hapus foto lama venue: ' . $e->getMessage());
+                }
             }
-            $path = $request->file('photo')->store('venues', 'public');
-            $validated['photo'] = $path;
+            $photo    = $request->file('photo');
+            $filename = time() . '_' . uniqid() . '.' . $photo->getClientOriginalExtension();
+            Storage::disk('venues_storage')->putFileAs('', $photo, $filename, 'public');
+            $validated['photo'] = $filename;
+
         } elseif ($request->photo_link) {
-            // Delete old photo if exists
-            if ($venue->photo && !Str::contains($venue->photo, ['http', 'drive.google.com'])) {
-                Storage::disk('public')->delete($venue->photo);
+            // Hapus foto lama dari S3 jika bukan URL eksternal
+            if ($venue->photo && !Str::startsWith($venue->photo, 'http')) {
+                try {
+                    Storage::disk('venues_storage')->delete($venue->photo);
+                } catch (\Exception $e) {
+                    \Log::warning('Gagal hapus foto lama venue: ' . $e->getMessage());
+                }
             }
             $validated['photo'] = $request->photo_link;
+
         } else {
-            // Keep existing photo if no new photo provided
+            // Tidak ada foto baru — pertahankan yang lama
             unset($validated['photo']);
         }
 
-        // Handle facilities dari checkbox
+        // Facilities dari checkbox
         $facilities = [];
-        if ($request->facilityParking) $facilities[] = 'Parkir';
-        if ($request->facilityToilet) $facilities[] = 'Toilet';
-        if ($request->facilityKantin) $facilities[] = 'Kantin';
-        if ($request->facilityAC) $facilities[] = 'AC';
-        if ($request->facilityMusholla) $facilities[] = 'Musholla';
+        if ($request->facilityParking)    $facilities[] = 'Parkir';
+        if ($request->facilityToilet)     $facilities[] = 'Toilet';
+        if ($request->facilityKantin)     $facilities[] = 'Kantin';
+        if ($request->facilityAC)         $facilities[] = 'AC';
+        if ($request->facilityMusholla)   $facilities[] = 'Musholla';
         if ($request->facilityRuangGanti) $facilities[] = 'Ruang Ganti';
-        if ($request->facilityRuangTunggu) $facilities[] = 'Ruang Tunggu/Tribun';
-        if ($request->facilitySoundSystem) $facilities[] = 'Sound System';
+        if ($request->facilityRuangTunggu)$facilities[] = 'Ruang Tunggu/Tribun';
+        if ($request->facilitySoundSystem)$facilities[] = 'Sound System';
 
         $validated['facilities'] = $facilities;
 
@@ -174,9 +183,13 @@ class VenueController extends Controller
     {
         $venue = Venue::where('user_id', Auth::id())->findOrFail($id);
 
-        // Delete photo if exists
-        if ($venue->photo && !Str::contains($venue->photo, ['http', 'drive.google.com'])) {
-            Storage::disk('public')->delete($venue->photo);
+        // ✅ Hapus dari Supabase S3
+        if ($venue->photo && !Str::startsWith($venue->photo, 'http')) {
+            try {
+                Storage::disk('venues_storage')->delete($venue->photo);
+            } catch (\Exception $e) {
+                \Log::warning('Gagal hapus foto venue saat delete: ' . $e->getMessage());
+            }
         }
 
         $venue->delete();
@@ -187,22 +200,17 @@ class VenueController extends Controller
     public function toggleStatus($id)
     {
         $venue = Venue::where('user_id', Auth::id())->findOrFail($id);
-        
-        // UPDATE LOGIC TOGGLE STATUS UNTUK 3 STATUS
-        $currentStatus = $venue->status;
-        
-        if ($currentStatus === 'Aktif') {
+
+        if ($venue->status === 'Aktif') {
             $venue->status = 'Maintenance';
-        } elseif ($currentStatus === 'Maintenance') {
+        } elseif ($venue->status === 'Maintenance') {
             $venue->status = 'Tidak Aktif';
         } else {
             $venue->status = 'Aktif';
         }
-        
+
         $venue->save();
 
         return redirect()->route('venue.venue-saya')->with('success', 'Status venue berhasil diubah.');
     }
-
-    
 }

@@ -35,9 +35,7 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
-     * Generate Supabase public URL langsung — TANPA koneksi S3.
-     * Bucket profile-photos bersifat Public sehingga URL bisa di-generate
-     * secara statik tanpa perlu credentials AWS/Supabase sama sekali.
+     * Generate Supabase public URL — folder users/ atau owners/ sesuai role.
      */
     public function getProfilePhotoUrlAttribute(): ?string
     {
@@ -45,15 +43,14 @@ class User extends Authenticatable implements MustVerifyEmail
             return null;
         }
 
-        // Supabase project URL (hardcoded fallback jika env belum di-set)
-        $supabaseUrl = rtrim(
-            config('services.supabase.url', env('SUPABASE_URL', 'https://tyxxjuqqtpezebmwqhug.supabase.co')),
-            '/'
-        );
+        $supabaseUrl = rtrim(env('SUPABASE_URL', 'https://tyxxjuqqtpezebmwqhug.supabase.co'), '/');
 
-        // File lama tersimpan langsung di profile-photos/{filename}
-        // Format URL public Supabase: /storage/v1/object/public/{bucket}/{path}
-        return "{$supabaseUrl}/storage/v1/object/public/profile-photos/{$this->profile_photo}";
+        // Struktur bucket profile-photos:
+        //   profile-photos/owners/{filename}  -> role owner
+        //   profile-photos/users/{filename}   -> role user/admin
+        $folder = $this->hasRole('owner') ? 'owners' : 'users';
+
+        return "{$supabaseUrl}/storage/v1/object/public/profile-photos/{$folder}/{$this->profile_photo}";
     }
 
     public function getHasProfilePhotoAttribute(): bool
