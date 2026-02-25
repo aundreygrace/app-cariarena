@@ -35,5 +35,5 @@ RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
 
 EXPOSE ${PORT}
 
-# ✅ Hanya 1 CMD — storage:link tidak diperlukan karena pakai Supabase S3
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT}
+# ✅ migrate --graceful: skip jika table sudah ada, tidak crash
+CMD php artisan migrate --force --graceful && php artisan serve --host=0.0.0.0 --port=${PORT}
