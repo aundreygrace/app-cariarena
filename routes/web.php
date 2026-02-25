@@ -237,28 +237,25 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', RoleMiddleware::clas
 
     // Manajemen Pengguna
     Route::prefix('pengguna')->name('pengguna.')->group(function () {
-        Route::get('/', [UserController::class, 'index'])->name('index');
-        Route::post('/', [UserController::class, 'store'])->name('store');
-        Route::get('/create', [UserController::class, 'create'])->name('create');
-        Route::get('/{id}', [UserController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [UserController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [UserController::class, 'update'])->name('update');
-        Route::delete('/{id}', [UserController::class, 'destroy'])->name('destroy');
-        Route::get('/statistics', [UserController::class, 'getStatistics'])->name('statistics');
+        Route::get('/',             [UserController::class, 'index'])->name('index');
+        Route::post('/',            [UserController::class, 'store'])->name('store');
+        Route::get('/create',       [UserController::class, 'create'])->name('create');
+        Route::get('/statistics',   [UserController::class, 'getStatistics'])->name('statistics'); // ✅ HARUS sebelum /{id}
+        Route::get('/{id}',         [UserController::class, 'show'])->name('show');
+        Route::get('/{id}/edit',    [UserController::class, 'edit'])->name('edit');
+        Route::put('/{id}',         [UserController::class, 'update'])->name('update');
+        Route::delete('/{id}',      [UserController::class, 'destroy'])->name('destroy');
     });
 
-    // Manajemen Venue (admin) — prefix name 'admin.venue.' agar tidak bentrok dengan venue owner
+    // Manajemen Venue (admin)
     Route::prefix('venue')->name('venue.')->group(function () {
-        Route::get('/', [AdminVenueController::class, 'index'])->name('index');
-        Route::get('/create', [AdminVenueController::class, 'create'])->name('create');
-        Route::post('/', [AdminVenueController::class, 'store'])->name('store');
-        Route::get('/{venue}', [AdminVenueController::class, 'show'])->name('show');
+        Route::get('/',             [AdminVenueController::class, 'index'])->name('index');
+        Route::get('/create',       [AdminVenueController::class, 'create'])->name('create');  // ✅ HARUS sebelum /{venue}
+        Route::post('/',            [AdminVenueController::class, 'store'])->name('store');
+        Route::get('/{venue}',      [AdminVenueController::class, 'show'])->name('show');
         Route::get('/{venue}/edit', [AdminVenueController::class, 'edit'])->name('edit');
-        Route::put('/{venue}', [AdminVenueController::class, 'update'])->name('update');
-        Route::delete('/{venue}', [AdminVenueController::class, 'destroy'])->name('destroy');
-        Route::get('/tambah', [AdminVenueController::class, 'create'])->name('tambah');
-        Route::post('/simpan', [AdminVenueController::class, 'store'])->name('simpan');
-        Route::delete('/{venue}/hapus', [AdminVenueController::class, 'destroy'])->name('hapus');
+        Route::put('/{venue}',      [AdminVenueController::class, 'update'])->name('update');
+        Route::delete('/{venue}',   [AdminVenueController::class, 'destroy'])->name('destroy');
     });
 
     // Manajemen Pemesanan

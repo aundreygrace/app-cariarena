@@ -835,9 +835,9 @@
                         <label class="form-label">Status</label>
                         <select class="form-select" id="statusFilter" name="status">
                             <option value="">Semua Status</option>
-                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Aktif</option>
-                            <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Perawatan</option>
-                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Nonaktif</option>
+                            <option value="Aktif"      {{ request('status') == 'Aktif'      ? 'selected' : '' }}>Aktif</option>
+                            <option value="Maintenance" {{ request('status') == 'Maintenance' ? 'selected' : '' }}>Perawatan</option>
+                            <option value="Tidak Aktif" {{ request('status') == 'Tidak Aktif' ? 'selected' : '' }}>Nonaktif</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -926,8 +926,8 @@
                             </td>
                             <td class="fw-bold text-success">Rp {{ number_format($venue->price_per_hour, 0, ',', '.') }}</td>
                             <td>
-                                <span class="badge badge-{{ $venue->status == 'active' ? 'active' : ($venue->status == 'maintenance' ? 'maintenance' : 'inactive') }}">
-                                    {{ $venue->status == 'active' ? 'Aktif' : ($venue->status == 'maintenance' ? 'Perawatan' : 'Nonaktif') }}
+                                <span class="badge badge-{{ $venue->status == 'Aktif' ? 'active' : ($venue->status == 'Maintenance' ? 'maintenance' : 'inactive') }}">
+                                    {{ $venue->status == 'Aktif' ? 'Aktif' : ($venue->status == 'Maintenance' ? 'Perawatan' : 'Nonaktif') }}
                                 </span>
                             </td>
                             <td>
@@ -1284,12 +1284,12 @@
                     document.getElementById('detailDibuat').textContent = venue.created_at ? new Date(venue.created_at).toLocaleDateString('id-ID') : '-';
                     document.getElementById('detailDiperbarui').textContent = venue.updated_at ? new Date(venue.updated_at).toLocaleDateString('id-ID') : '-';
                     
-                    // Set badge status
+                    // Set badge status — nilai DB: 'Aktif', 'Maintenance', 'Tidak Aktif'
                     const statusBadge = document.getElementById('detailStatus');
-                    const statusText = venue.status === 'active' ? 'Aktif' : 
-                                     venue.status === 'maintenance' ? 'Perawatan' : 'Nonaktif';
-                    const statusClass = venue.status === 'active' ? 'badge-active' : 
-                                     venue.status === 'maintenance' ? 'badge-maintenance' : 'badge-inactive';
+                    const statusText  = venue.status === 'Aktif'       ? 'Aktif' :
+                                       venue.status === 'Maintenance'  ? 'Perawatan' : 'Nonaktif';
+                    const statusClass = venue.status === 'Aktif'       ? 'badge-active' :
+                                       venue.status === 'Maintenance'  ? 'badge-maintenance' : 'badge-inactive';
                     
                     statusBadge.className = 'badge ' + statusClass;
                     statusBadge.textContent = statusText;

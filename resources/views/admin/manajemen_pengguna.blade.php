@@ -1083,7 +1083,7 @@
                                     @endif
                                     <div style="min-width: 0;">
                                         <div class="fw-medium text-truncate">{{ $user->name }}</div>
-                                        @if(strpos($user->email, 'admin') !== false)
+                                        @if($user->hasRole('admin'))
                                             <small class="text-muted">Administrator</small>
                                         @endif
                                     </div>
@@ -1098,9 +1098,9 @@
                                 @endif
                             </td>
                             <td>
-                                @if(strpos($user->email, 'admin') !== false)
+                                @if($user->hasRole('admin'))
                                     <span class="badge badge-admin">Admin</span>
-                                @elseif($user->venue_name && $user->venue_name != '[null]')
+                                @elseif($user->hasRole('owner'))
                                     <span class="badge badge-venue">Pemilik Venue</span>
                                 @else
                                     <span class="badge badge-user">Pengguna</span>
@@ -1641,13 +1641,14 @@
                         day: 'numeric'
                     }) : '-';
                     
-                    // Set badge tipe
+                    // Set badge tipe — gunakan field 'role' dari response API
                     const tipeBadge = document.getElementById('detailTipe');
+                    const userRole = user.role || '';
                     
-                    if (user.email && user.email.includes('admin')) {
+                    if (userRole === 'admin') {
                         tipeBadge.className = 'badge badge-admin';
                         tipeBadge.textContent = 'Admin';
-                    } else if (user.venue_name && user.venue_name !== '[null]') {
+                    } else if (userRole === 'owner') {
                         tipeBadge.className = 'badge badge-venue';
                         tipeBadge.textContent = 'Pemilik Venue';
                     } else {

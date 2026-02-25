@@ -30,23 +30,16 @@ class UserController extends Controller
             });
         }
         
-        // Filter berdasarkan tipe
+        // Filter berdasarkan tipe — gunakan Spatie roles (bukan heuristic email/venue_name)
         if ($request->has('type') && !empty($request->type)) {
-            if ($request->type == 'admin') {
-                $query->where('email', 'like', '%admin%');
-            } elseif ($request->type == 'venue') {
-                $query->whereNotNull('venue_name')
-                      ->where('venue_name', '!=', '[null]');
-            } elseif ($request->type == 'user') {
-                $query->where(function($q) {
-                    $q->whereNull('venue_name')
-                      ->orWhere('venue_name', '[null]')
-                      ->orWhere('venue_name', '');
-                })->where('email', 'not like', '%admin%');
-            }
+            $query->whereHas('roles', function($q) use ($request) {
+                $roleMap = ['admin' => 'admin', 'venue' => 'owner', 'user' => 'user'];
+                $roleName = $roleMap[$request->type] ?? $request->type;
+                $q->where('name', $roleName);
+            });
         }
         
-        // Filter berdasarkan status (contoh: Aktif/Nonaktif berdasarkan email_verified_at)
+        // Filter berdasarkan status (Aktif = email verified, Nonaktif = belum verified)
         if ($request->has('status') && !empty($request->status)) {
             if ($request->status == 'Aktif') {
                 $query->whereNotNull('email_verified_at');
@@ -66,15 +59,13 @@ class UserController extends Controller
             $users = $query->paginate($perPage)->withQueryString();
         }
         
-        // Hitung statistik
+        // Hitung statistik — gunakan Spatie roles
         $totalPengguna = User::count();
-        $pemilikVenue = User::whereNotNull('venue_name')
-                           ->where('venue_name', '!=', '[null]')
-                           ->count();
-        $penggunaBaru = User::whereMonth('created_at', now()->month)
-                           ->whereYear('created_at', now()->year)
-                           ->count();
-        $totalAdmin = User::where('email', 'like', '%admin%')->count();
+        $pemilikVenue  = User::whereHas('roles', fn($q) => $q->where('name', 'owner'))->count();
+        $penggunaBaru  = User::whereMonth('created_at', now()->month)
+                             ->whereYear('created_at', now()->year)
+                             ->count();
+        $totalAdmin    = User::whereHas('roles', fn($q) => $q->where('name', 'admin'))->count();
         
         // Tampilkan view
         return view('admin.manajemen_pengguna', compact(
@@ -137,12 +128,12 @@ class UserController extends Controller
                 'email_verified_at' => now(), // Auto verify untuk admin-created users
             ]);
             
-            // Assign role berdasarkan tipe
-            $roleName = $request->role;
+            // Assign role berdasarkan tipe — 'venue' di form = role 'owner' di Spatie
+            $roleNameMap = ['admin' => 'admin', 'venue' => 'owner', 'user' => 'user'];
+            $roleName = $roleNameMap[$request->role] ?? $request->role;
             $role = Role::where('name', $roleName)->first();
             
             if (!$role) {
-                // Jika role belum ada, buat role baru
                 $role = Role::create(['name' => $roleName, 'guard_name' => 'web']);
             }
             
@@ -281,13 +272,11 @@ class UserController extends Controller
     public function getStatistics()
     {
         $totalPengguna = User::count();
-        $pemilikVenue = User::whereNotNull('venue_name')
-                           ->where('venue_name', '!=', '[null]')
-                           ->count();
-        $penggunaBaru = User::whereMonth('created_at', now()->month)
-                           ->whereYear('created_at', now()->year)
-                           ->count();
-        $totalAdmin = User::where('email', 'like', '%admin%')->count();
+        $pemilikVenue  = User::whereHas('roles', fn($q) => $q->where('name', 'owner'))->count();
+        $penggunaBaru  = User::whereMonth('created_at', now()->month)
+                             ->whereYear('created_at', now()->year)
+                             ->count();
+        $totalAdmin    = User::whereHas('roles', fn($q) => $q->where('name', 'admin'))->count();
         
         return response()->json([
             'totalPengguna' => $totalPengguna,

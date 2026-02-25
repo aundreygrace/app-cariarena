@@ -12,61 +12,61 @@ class VenueController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Venue::query();
+        $query = Venue::with('user');
 
-        // Filter pencarian
-        if ($request->has('search') && $request->search) {
-            $query->where('name', 'ilike', '%' . $request->search . '%')
-                  ->orWhere('address', 'ilike', '%' . $request->search . '%');
+        // Filter pencarian (ilike = case-insensitive di PostgreSQL)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'ilike', '%' . $search . '%')
+                  ->orWhere('address', 'ilike', '%' . $search . '%');
+            });
         }
 
-        // Filter status
-        if ($request->has('status') && $request->status) {
+        // ✅ FIX: status di DB adalah 'Aktif', 'Maintenance', 'Tidak Aktif' — bukan 'active'
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // Filter jenis olahraga
-        if ($request->has('jenis_olahraga') && $request->jenis_olahraga) {
-            $query->where('sport_type', $request->jenis_olahraga);
+        // ✅ FIX: kolom di DB adalah 'category' — bukan 'sport_type'
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
         }
 
-        $venues = $query->latest()->paginate(10);
+        $venues = $query->latest()->paginate(10)->withQueryString();
 
-        // Statistik
-        $totalVenue = Venue::count();
-        $venueAktif = Venue::where('status', 'active')->count();
-        $venuePerawatan = Venue::where('status', 'maintenance')->count();
+        // ✅ FIX: statistik pakai nilai DB yang benar
+        $totalVenue      = Venue::count();
+        $venueAktif      = Venue::where('status', 'Aktif')->count();
+        $venuePerawatan  = Venue::where('status', 'Maintenance')->count();
         $tingkatPemanfaatan = $this->calculateUtilizationRate();
 
         return view('admin.venue', compact(
-            'venues', 
-            'totalVenue', 
-            'venueAktif', 
-            'venuePerawatan', 
+            'venues',
+            'totalVenue',
+            'venueAktif',
+            'venuePerawatan',
             'tingkatPemanfaatan'
         ));
     }
 
     public function store(Request $request)
     {
-        // ✅ FIX: Validasi data
+        // ✅ FIX: validasi sesuai kolom DB yang ada (name, address, category, bukan sport_type)
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'address' => 'required|string',
-            'sport_type' => 'required|string|max:100',
-            'facilities' => 'required|string',
-            'price_per_hour' => 'required|numeric|min:0',
-            'status' => 'required|in:active,maintenance,inactive',
-            'description' => 'nullable|string',
-            'rating' => 'nullable|numeric|min:0|max:5'
+            'name'          => 'required|string|max:255',
+            'address'       => 'required|string',
+            'category'      => 'required|in:Futsal,Badminton,Basket,Soccer',
+            'user_id'       => 'required|exists:users,id',
+            'price_per_hour'=> 'nullable|numeric|min:0',
+            'facilities'    => 'nullable|array',
+            'description'   => 'nullable|string',
+            'status'        => 'required|in:Aktif,Maintenance,Tidak Aktif',
         ]);
 
         try {
             Log::info('Mencoba menyimpan venue baru:', $validated);
-            
-            // ✅ FIX: Simpan ke database
             $venue = Venue::create($validated);
-            
             Log::info('Venue berhasil disimpan dengan ID: ' . $venue->id);
             
             return redirect()->route('admin.venue.index')
@@ -110,16 +110,16 @@ class VenueController extends Controller
             
             Log::info('Mencoba update venue ID: ' . $id, $request->all());
 
-            // ✅ FIX: Validasi data - konsisten dengan store method
+            // ✅ FIX: kolom DB yang benar, status nilai DB yang benar
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'location' => 'required|string',
-                'sport_type' => 'required|string|max:100',
-                'facilities' => 'required|string',
-                'price_per_hour' => 'required|numeric|min:0',
-                'status' => 'required|in:active,maintenance,inactive', // ✅ FIX: konsisten dengan store
-                'description' => 'nullable|string',
-                'rating' => 'nullable|numeric|min:0|max:5'
+                'name'          => 'required|string|max:255',
+                'address'       => 'required|string',
+                'category'      => 'required|in:Futsal,Badminton,Basket,Soccer',
+                'user_id'       => 'nullable|exists:users,id',
+                'price_per_hour'=> 'nullable|numeric|min:0',
+                'facilities'    => 'nullable|array',
+                'description'   => 'nullable|string',
+                'status'        => 'required|in:Aktif,Maintenance,Tidak Aktif',
             ]);
 
             // ✅ FIX: Update data di database
