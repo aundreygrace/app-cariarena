@@ -175,7 +175,7 @@ class LaporanController extends Controller
             
             Log::debug('getCombinedData - Filter status diterapkan:', [
                 'status' => $status,
-                'bookingStatus' => $bookingStatus,
+                'bookingStatus' => $bookingStatuses,
                 'transactionStatus' => $transactionStatus
             ]);
         }
