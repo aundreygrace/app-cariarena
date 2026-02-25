@@ -895,7 +895,7 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     @if($venue->photo && $venue->photo != '[null]')
-                                        <img src="{{ Storage::url($venue->photo) }}" alt="{{ $venue->name }}" class="rounded-circle me-2" width="32" height="32">
+                                        <img src="{{ $venue->photo_url }}" alt="{{ $venue->name }}" class="rounded-circle me-2" width="32" height="32">
                                     @else
                                         <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
                                             <i class="fas fa-store"></i>

@@ -74,7 +74,7 @@ class BerandaController extends Controller
                         'rating' => $venue->rating ?? 0, // Langsung dari kolom rating
                         'status' => 'Tersedia',
                         'reviews_count' => $venue->reviews_count ?? 0, // Langsung dari kolom reviews_count
-                        'image' => $venue->photo ?? $this->getDefaultImage($venue->category) // Kolom photo bukan image_url
+                        'image' => $venue->photo_url // Kolom photo bukan image_url
                     ];
                 });
                 \Log::info('Loaded ' . $venues->count() . ' venues from database');
@@ -130,7 +130,7 @@ class BerandaController extends Controller
                         'rating' => $venue->rating ?? 0,
                         'status' => 'Tersedia',
                         'reviews_count' => $venue->reviews_count ?? 0,
-                        'image' => $venue->photo ?? $this->getDefaultImage($venue->category)
+                        'image' => $venue->photo_url
                     ];
                 });
 
@@ -167,7 +167,7 @@ class BerandaController extends Controller
                         'rating' => $venue->rating ?? 0,
                         'status' => 'Tersedia',
                         'reviews_count' => $venue->reviews_count ?? 0,
-                        'image' => $venue->photo ?? $this->getDefaultImage($venue->category)
+                        'image' => $venue->photo_url
                     ];
                 });
 

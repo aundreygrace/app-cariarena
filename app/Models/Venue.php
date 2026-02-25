@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Support\Facades\Storage;
+
 
 class Venue extends Model
 {
@@ -170,9 +170,10 @@ class Venue extends Model
     }
 
     /**
-     * ✅ FIXED: Accessor photo URL — support Supabase S3 & local
+     * Accessor photo URL — generate Supabase public URL langsung tanpa koneksi S3.
+     * Bucket "venues" bersifat Public, URL bisa di-generate secara statik.
      */
-    public function getPhotoUrlAttribute()
+    public function getPhotoUrlAttribute(): string
     {
         if (empty($this->photo)) {
             return $this->getDefaultPhotoUrl();
@@ -185,30 +186,17 @@ class Venue extends Model
 
         $photo = $this->photo;
 
-        // Normalisasi path:
-        // "venue/GRIYAFUTSAL.png"  -> "GRIYAFUTSAL.png"
-        // "venues/GRIYAFUTSAL.png" -> "GRIYAFUTSAL.png"
-        // "FATHKIFUTSAL.png"       -> "FATHKIFUTSAL.png" (tidak berubah)
+        // Normalisasi: buang prefix "venues/" atau "venue/" jika ada
         $photo = preg_replace('#^venues?/#i', '', $photo);
 
-        // Jika tidak punya ekstensi (data kotor seperti "lapfutsalsda"), return default
+        // Jika tidak punya ekstensi (data kotor), return default
         if (!str_contains($photo, '.')) {
             return $this->getDefaultPhotoUrl();
         }
 
-        $disk = config('filesystems.default');
-
-        // Jika pakai S3/Supabase — semua file ada di root bucket "venues"
-        if ($disk === 's3') {
-            return Storage::disk('s3')->url($photo);
-        }
-
-        // Local
-        if (Storage::disk('public')->exists('venues/' . $photo)) {
-            return asset('storage/venues/' . $photo);
-        }
-
-        return $this->getDefaultPhotoUrl();
+        // Generate Supabase public URL langsung — TANPA Storage::disk()->url()
+        $supabaseUrl = rtrim(env('SUPABASE_URL', 'https://tyxxjuqqtpezebmwqhug.supabase.co'), '/');
+        return "{$supabaseUrl}/storage/v1/object/public/venues/{$photo}";
     }
 
     public function getDefaultPhotoUrl()
