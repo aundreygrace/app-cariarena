@@ -52,10 +52,10 @@ class Venue extends Model
         });
 
         static::deleting(function ($venue) {
-            $venue->jadwals()->delete();
-            $venue->pemesanans()->delete();
-            $venue->fields()->delete();
-            $venue->reviews()->delete();
+            try { $venue->jadwals()->delete(); } catch (\Exception $e) { \Log::warning('jadwals delete: ' . $e->getMessage()); }
+            try { $venue->pemesanans()->delete(); } catch (\Exception $e) { \Log::warning('pemesanans delete: ' . $e->getMessage()); }
+            try { $venue->fields()->delete(); } catch (\Exception $e) { \Log::warning('fields delete: ' . $e->getMessage()); }
+            try { $venue->reviews()->delete(); } catch (\Exception $e) { \Log::warning('reviews delete: ' . $e->getMessage()); }
         });
     }
 
