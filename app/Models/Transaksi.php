@@ -19,6 +19,7 @@ class Transaksi extends Model
 
     protected $fillable = [
         'transaction_number',
+        'booking_id', 
         'customer_id', 
         'pengguna',
         'nama_venue',
