@@ -36,4 +36,4 @@ RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
 EXPOSE ${PORT}
 
 # ✅ migrate --graceful: skip jika table sudah ada, tidak crash
-CMD php artisan migrate --force --graceful && php artisan serve --host=0.0.0.0 --port=${PORT}
+CMD php artisan serve --host=0.0.0.0 --port=${PORT}

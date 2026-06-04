@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('header'); ?>
 <header class="main-header p-4 pt-4 pb-12 rounded-b-3xl">
     <!-- Ikon bola voli animasi menggelinding (hanya desktop) -->

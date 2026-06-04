@@ -371,8 +371,8 @@
             <small>Venue Terpopuler</small>
             <h3>{{ $venueTerpopuler }}</h3>
             <small>
-    {{ ($isAdmin ?? false) ? 'Semua Venue' : ($jumlahPemesananVenue ?? 0).'x dipesan' }}
-</small>
+                {{ ($isAdmin ?? false) ? 'Semua Venue' : ($jumlahPemesananVenue ?? 0).'x dipesan' }}
+            </small>
         </div>
     </div>
 
