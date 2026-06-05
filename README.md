@@ -1,59 +1,377 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🏟️ CariArena
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+CariArena is a web-based sports venue booking platform that connects customers with sports venue owners through a centralized booking system.
 
-## About Laravel
+The platform enables users to discover sports venues, check real-time availability, make online reservations, manage booking history, submit reviews, and receive notifications. Venue owners can manage their venues, schedules, bookings, and reports through a dedicated dashboard, while administrators oversee the entire platform ecosystem.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## ✨ Key Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Customer Features
 
-## Learning Laravel
+- User registration and authentication
+- Email verification
+- Password reset
+- Venue discovery and search
+- Real-time schedule availability
+- Online booking system
+- Booking history management
+- Booking cancellation
+- Venue reviews and ratings
+- Account management
+- Notification center
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Venue Owner Features
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- Owner dashboard
+- Venue management (CRUD)
+- Schedule management
+- Incoming booking management
+- Review management
+- Business reports and analytics
+- Profile and settings management
 
-## Laravel Sponsors
+### Administrator Features
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- Admin dashboard
+- Venue moderation
+- Booking monitoring
+- Transaction monitoring
+- User management
+- Reporting and analytics
+- System configuration
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## 🏗️ System Architecture
 
-## Contributing
+```text
+Customer
+    │
+    ▼
+Laravel Application
+    │
+    ├── Authentication & Authorization
+    ├── Booking Engine
+    ├── Payment Processing
+    ├── Review System
+    ├── Notification System
+    │
+    ├── PostgreSQL Database
+    ├── Supabase Storage
+    └── Email Service
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 🛠️ Technology Stack
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Backend
 
-## Security Vulnerabilities
+- PHP 8.3
+- Laravel 12
+- PostgreSQL
+- Laravel Scheduler
+- Laravel Queue
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Frontend
 
-## License
+- Blade Templates
+- Bootstrap
+- JavaScript
+- AJAX
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Authentication & Authorization
+
+- Laravel Authentication
+- Email Verification
+- Password Reset
+- Spatie Laravel Permission
+
+### Storage & Media
+
+- Supabase Storage
+
+### Infrastructure
+
+- Docker
+- Render
+- Neon PostgreSQL
+
+---
+
+## 📂 Core Modules
+
+### Authentication Module
+
+- Login
+- Registration
+- Email Verification
+- Password Reset
+- Role-Based Access Control
+
+### Venue Management Module
+
+- Create Venue
+- Update Venue
+- Delete Venue
+- Venue Gallery
+- Venue Status Management
+
+### Booking Module
+
+- Venue Booking
+- Schedule Validation
+- Booking Confirmation
+- Booking Cancellation
+
+### Review Module
+
+- Venue Ratings
+- Customer Reviews
+- Review History
+
+### Transaction Module
+
+- Payment Recording
+- Transaction History
+- Financial Reporting
+
+---
+
+## 🗄️ Database Overview
+
+Main Entities:
+
+```text
+users
+venues
+jadwal
+booking
+transactions
+reviews
+notifications
+admins
+customers
+```
+
+Relationship Overview:
+
+```text
+User
+ ├── Venues
+ ├── Bookings
+ └── Reviews
+
+Venue
+ ├── Schedules
+ ├── Bookings
+ └── Reviews
+
+Booking
+ ├── User
+ ├── Venue
+ ├── Schedule
+ └── Transaction
+```
+
+---
+
+## 📸 Media Storage Structure
+
+### Profile Photos
+
+```text
+profile-photos/
+├── owners/
+└── users/
+```
+
+### Venue Photos
+
+```text
+venues/
+```
+
+Venue images are stored in Supabase Storage. The system automatically provides fallback images when no custom image is available.
+
+---
+
+## 🔐 User Roles
+
+### Customer
+
+- Search venues
+- Create bookings
+- Manage account
+- Submit reviews
+
+### Venue Owner
+
+- Manage venues
+- Manage schedules
+- Manage bookings
+- Access reports
+
+### Administrator
+
+- Manage users
+- Manage venues
+- Monitor bookings
+- Monitor transactions
+- Configure platform settings
+
+---
+
+## 🌐 Main Routes
+
+### Customer
+
+```text
+/beranda
+/pesan
+/riwayat
+/akun
+/notifikasi
+```
+
+### Venue Owner
+
+```text
+/venue/dashboard
+/venue/venue-saya
+/venue/jadwal
+/venue/booking-masuk
+/venue/ulasan
+/venue/reports
+/venue/pengaturan
+```
+
+### Administrator
+
+```text
+/admin/dashboard
+/admin/venues
+/admin/pemesanan
+/admin/transaksi
+/admin/laporan
+/admin/pengguna
+/admin/pengaturan
+```
+
+---
+
+## ⚙️ Local Development Setup
+
+### Clone Repository
+
+```bash
+git clone https://github.com/yourusername/cariarena.git
+cd cariarena
+```
+
+### Install Dependencies
+
+```bash
+composer install
+```
+
+### Create Environment File
+
+```bash
+cp .env.example .env
+```
+
+### Configure Database
+
+```env
+DB_CONNECTION=pgsql
+DB_HOST=
+DB_PORT=
+DB_DATABASE=
+DB_USERNAME=
+DB_PASSWORD=
+```
+
+### Generate Application Key
+
+```bash
+php artisan key:generate
+```
+
+### Run Database Migration
+
+```bash
+php artisan migrate
+```
+
+### Start Development Server
+
+```bash
+php artisan serve
+```
+
+---
+
+## 🐳 Docker Deployment
+
+### Build Image
+
+```bash
+docker build -t cariarena .
+```
+
+### Run Container
+
+```bash
+docker run -p 8000:8000 cariarena
+```
+
+---
+
+## 🚀 Production Stack
+
+The current production environment uses:
+
+- Render (Application Hosting)
+- Neon PostgreSQL (Database)
+- Supabase Storage (File Storage)
+- Custom Domain Configuration
+- Email Verification & Password Reset System
+
+---
+
+## 📋 Known Issues
+
+### High Priority
+
+- Inconsistent admin fee calculation logic
+- Duplicate payment handling implementation
+- Legacy registration file outside Laravel architecture
+- Incorrect Review model relationship reference
+
+### Medium Priority
+
+- Notification module still uses mock data
+- Transaction trend queries contain MySQL-specific functions
+- Historical venue naming dependency in transactions
+
+### Low Priority
+
+- Incomplete Lapangan module
+- Hardcoded slot availability logic
+
+---
+
+## 🛣️ Future Roadmap
+
+- Payment Gateway Integration
+- Real-Time Booking Updates
+- Dynamic Notification System
+- Mobile Experience Improvements
+- Venue Analytics Dashboard
+- AI-Based Venue Recommendations
+- Multi-City Expansion
+
+---
